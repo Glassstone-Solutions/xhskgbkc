@@ -3,33 +3,33 @@ package net.glassstones.thediarymagazine.ui.fragments;
 
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import se.emilsjolander.flipview.FlipView.OnFlipListener;
-import se.emilsjolander.flipview.FlipView.OnOverFlipListener;
+import android.widget.ImageView;
+import android.widget.TextView;
 
-import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
-import net.glassstones.thediarymagazine.interfaces.Callback;
-import net.glassstones.thediarymagazine.models.NewsItem;
-import net.glassstones.thediarymagazine.ui.adapters.NewsFlipAdapter;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import se.emilsjolander.flipview.FlipView;
-import se.emilsjolander.flipview.OverFlipMode;
 
-public class UnderConstructionFragment extends Fragment implements Callback, OnFlipListener, OnOverFlipListener {
-
-//    private FlipViewController flipView;
+/**
+ * A simple {@link Fragment} subclass.
+ * Use the {@link UnderConstructionFragment#newInstance} factory method to
+ * create an instance of this fragment.
+ */
+public class UnderConstructionFragment extends Fragment {
 
     private static final String ARG_PARAM1 = "param1";
     private static final String ARG_PARAM2 = "param2";
-    @InjectView(R.id.flipView)
-    FlipView flipView;
-
-    private NewsFlipAdapter mAdapter;
+    @InjectView(R.id.pholder)
+    ImageView pholder;
+    @InjectView(R.id.title)
+    TextView title;
+    @InjectView(R.id.subtitle)
+    TextView subtitle;
 
     private int mParam1;
     private String mParam2;
@@ -55,7 +55,6 @@ public class UnderConstructionFragment extends Fragment implements Callback, OnF
             mParam1 = getArguments().getInt(ARG_PARAM1);
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
-
     }
 
     @Override
@@ -64,51 +63,19 @@ public class UnderConstructionFragment extends Fragment implements Callback, OnF
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_under_construction, container, false);
         ButterKnife.inject(this, view);
-
-        view.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-
         return view;
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mAdapter = new NewsFlipAdapter(getActivity(), Common.getNewsCluster());
-        mAdapter.setCallback(this);
-        flipView.setAdapter(mAdapter);
-        flipView.setOnFlipListener(this);
-        flipView.setOnOverFlipListener(this);
-        flipView.setOverFlipMode(OverFlipMode.RUBBER_BAND);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
+        pholder.setImageDrawable(ContextCompat.getDrawable(getActivity(), mParam1));
+        subtitle.setText(mParam2);
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         ButterKnife.reset(this);
-    }
-
-    @Override
-    public void onFlippedToPage(FlipView v, int position, long id) {
-
-    }
-
-    @Override
-    public void onOverFlip(FlipView v, OverFlipMode mode, boolean overFlippingPrevious, float overFlipDistance, float flipDistancePerPage) {
-
-    }
-
-    @Override
-    public void onPageRequested(NewsItem newsItem) {
-//        flipView.smoothFlipTo(page);
     }
 }
