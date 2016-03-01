@@ -25,4 +25,9 @@
         <item name="tabSelectedTextColor">?android:textColorPrimary</item>
     </style>
 
+    <style name="AppTheme.TagButton" parent="Base.Widget.AppCompat.Button.Borderless">
+        <item name="android:background">@drawable/rounded_button_background_grey</item>
+        <item name="android:textColor">@drawable/button_text_color</item>
+    </style>
+
 </resources>
