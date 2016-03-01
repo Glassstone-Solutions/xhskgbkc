@@ -38,7 +38,7 @@
                 android:ellipsize="end"
                 android:maxLines="2"
                 android:textAppearance="@style/TextAppearance.AppCompat.Title"
-                android:textColor="@android:color/black"
+                android:textColor="@color/colorSource"
                 android:textSize="18sp"
                 app:font="@string/fira"/>
 
@@ -106,7 +106,7 @@
                 android:ellipsize="end"
                 android:maxLines="2"
                 android:textAppearance="@style/TextAppearance.AppCompat.Title"
-                android:textColor="@android:color/black"
+                android:textColor="@color/colorSource"
                 android:textSize="18sp"
                 android:layout_marginBottom="8dp"
                 app:font="@string/fira"/>

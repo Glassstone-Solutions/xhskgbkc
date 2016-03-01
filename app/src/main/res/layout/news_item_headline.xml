@@ -35,7 +35,7 @@
             android:ellipsize="end"
             android:maxLines="2"
             android:textAppearance="@style/TextAppearance.AppCompat.Title"
-            android:textColor="@android:color/black"
+            android:textColor="@color/colorSource"
             android:textSize="18sp"
             app:font="@string/fira"/>
 
@@ -61,14 +61,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="24dp"
                 android:text="Fashion"
-                android:background="@drawable/rounded_button_background_grey"/>
+                style="@style/AppTheme.TagButton"/>
 
             <Button
                 android:layout_width="wrap_content"
                 android:layout_height="24dp"
                 android:layout_marginLeft="@dimen/activity_vertical_margin"
                 android:text="Bakare"
-                android:background="@drawable/rounded_button_background_grey"/>
+                style="@style/AppTheme.TagButton"/>
 
         </LinearLayout>
 
