@@ -1,6 +1,7 @@
 package net.glassstones.thediarymagazine.ui.adapters;
 
 import android.content.Context;
+import android.text.Html;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -13,10 +14,14 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
+import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.interfaces.Callback;
+import net.glassstones.thediarymagazine.interfaces.network.TDMAPIClient;
 import net.glassstones.thediarymagazine.models.NewsCluster;
 import net.glassstones.thediarymagazine.models.NewsItem;
+import net.glassstones.thediarymagazine.models.WPMedia;
+import net.glassstones.thediarymagazine.network.ServiceGenerator;
 import net.glassstones.thediarymagazine.ui.widgets.CustomTextView;
 import net.glassstones.thediarymagazine.ui.widgets.TopAlignedImageView;
 
@@ -25,6 +30,9 @@ import java.util.List;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.InjectViews;
+import retrofit.Call;
+import retrofit.Response;
+import retrofit.Retrofit;
 
 /**
  * Created by Thompson on 17/02/2016.
@@ -42,11 +50,17 @@ public class NewsFlipAdapter extends BaseAdapter {
     private List<NewsCluster> items;
     private LayoutInflater inflater;
     private Callback callback;
+    private TDMAPIClient client;
 
     public NewsFlipAdapter(Context c, List<NewsCluster> i) {
         this.context = c;
         this.items = i;
         inflater = LayoutInflater.from(context);
+
+        ServiceGenerator sg = new ServiceGenerator((Common) context.getApplicationContext());
+
+        client = sg.createService(TDMAPIClient.class);
+
     }
 
     public void setCallback(Callback callback) {
@@ -161,11 +175,14 @@ public class NewsFlipAdapter extends BaseAdapter {
 
     private void bindHeadline(int position, ViewHolder v) {
         if (v instanceof Headline) {
+            NewsItem item = items.get(position).getItems().get(0);
             Headline vh = (Headline) v;
             ImageView splash = vh.getmSplash();
-            Glide.with(context).load(items.get(position).getItems().get(0).getImageUrl()).into(splash);
+            setImage(item, splash);
             TextView t = vh.getmTitle();
-            t.setText(items.get(position).getItems().get(0).getTitle());
+            t.setText(Html.fromHtml(item.getPost().getTitle().getTitle()));
+            CustomTextView ct = vh.getExcerpt();
+            ct.setText(Html.fromHtml(item.getPost().getExcerpt().getExcerpt()));
         }
     }
 
@@ -181,19 +198,27 @@ public class NewsFlipAdapter extends BaseAdapter {
                     t1 = vh.getTitle1();
                     i1 = vh.getSplash1();
 
-                    t1.setText(ni.getTitle());
+                    t1.setText(Html.fromHtml(ni.getPost().getTitle().getTitle()));
                     setImage(ni, i1);
 
                     setTextSize(t1, 18);
+
+                    CustomTextView ct = vh.getExcerpts().get(0);
+
+                    ct.setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
                 } else {
                     NewsItem ni = items.get(position).getItems().get(1);
                     t2 = vh.getTitle2();
                     i2 = vh.getSplash2();
 
-                    t2.setText(ni.getTitle());
+                    t2.setText(Html.fromHtml(ni.getPost().getTitle().getTitle()));
                     setImage(ni, i2);
 
                     setTextSize(t2, 18);
+
+                    CustomTextView ct = vh.getExcerpts().get(1);
+
+                    ct.setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
                 }
             }
 
@@ -213,28 +238,40 @@ public class NewsFlipAdapter extends BaseAdapter {
                     t1 = vh.getTitle1();
                     i1 = vh.getSplash1();
 
-                    t1.setText(ni.getTitle());
+                    t1.setText(Html.fromHtml(ni.getPost().getTitle().getTitle()));
                     setImage(ni, i1);
 
                     setTextSize(t1, 18);
+
+                    CustomTextView ct = vh.getExcerpts().get(0);
+
+                    ct.setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
                 } else if (ii == 1) {
                     NewsItem ni = items.get(position).getItems().get(1);
                     t2 = vh.getTitle2();
                     i2 = vh.getSplash2();
 
-                    t2.setText(ni.getTitle());
+                    t2.setText(Html.fromHtml(ni.getPost().getTitle().getTitle()));
                     setImage(ni, i2);
 
                     setTextSize(t2, 14);
+
+                    CustomTextView ct = vh.getExcerpts().get(1);
+
+                    ct.setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
                 } else {
                     NewsItem ni = items.get(position).getItems().get(2);
                     t3 = vh.getTitle3();
                     i3 = vh.getSplash3();
 
-                    t3.setText(ni.getTitle());
+                    t3.setText(Html.fromHtml(ni.getPost().getTitle().getTitle()));
                     setImage(ni, i3);
 
                     setTextSize(t3, 14);
+
+                    CustomTextView ct = vh.getExcerpts().get(2);
+
+                    ct.setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
                 }
             }
 
@@ -250,20 +287,41 @@ public class NewsFlipAdapter extends BaseAdapter {
 
             setImage(ni, i);
 
-            vh.getTitle().setText(ni.getTitle());
+            vh.getTitle().setText(Html.fromHtml(ni.getPost().getTitle().getTitle()));
 
-            if (ni.getTitle().length() > 55) {
+            if (ni.getPost().getTitle().getTitle().length() > 55) {
                 setTextSize(vh.getTitle(), 18);
             }
+
+            vh.getBody().setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
+
         }
     }
 
-    private void setImage(NewsItem ni, ImageView i) {
-        Glide.with(context).load(ni.getImageUrl()).into(i);
+    private void setImage(final NewsItem ni, final ImageView i) {
+        Call<WPMedia> mediaCall = client.getMedia(ni.getPost().getFeatured_media());
+
+        mediaCall.enqueue(new retrofit.Callback<WPMedia>() {
+            @Override
+            public void onResponse(Response<WPMedia> response, Retrofit retrofit) {
+                String url = response.body().getSource_url();
+                Glide.with(context).load(url != null ? url : "").into(i);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+
+            }
+        });
     }
 
     private void setTextSize(TextView t, int size) {
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, size);
+    }
+
+    public void update(List<NewsCluster> clusters) {
+        items = clusters;
+        notifyDataSetChanged();
     }
 
     static class ViewHolder {
@@ -275,6 +333,8 @@ public class NewsFlipAdapter extends BaseAdapter {
         ImageView mSplash;
         @InjectView(R.id.title)
         TextView mTitle;
+        @InjectView(R.id.txtBody1)
+        CustomTextView mExcerpt;
 
         public Headline(View v) {
             ButterKnife.inject(this, v);
@@ -287,6 +347,10 @@ public class NewsFlipAdapter extends BaseAdapter {
         public TextView getmTitle() {
             return mTitle;
         }
+
+        public CustomTextView getExcerpt() {
+            return mExcerpt;
+        }
     }
 
     static class VH1 extends ViewHolder {
@@ -294,6 +358,8 @@ public class NewsFlipAdapter extends BaseAdapter {
         List<TopAlignedImageView> splashes;
         @InjectViews({R.id.title1, R.id.title2})
         List<TextView> mText;
+        @InjectViews({R.id.txtBody1, R.id.txtBody2})
+        List<CustomTextView> excerpts;
 
         public VH1(View v) {
             ButterKnife.inject(this, v);
@@ -314,6 +380,10 @@ public class NewsFlipAdapter extends BaseAdapter {
         public TextView getTitle2() {
             return mText.get(1);
         }
+
+        public List<CustomTextView> getExcerpts() {
+            return excerpts;
+        }
     }
 
     static class VH2 extends ViewHolder {
@@ -322,8 +392,15 @@ public class NewsFlipAdapter extends BaseAdapter {
         @InjectViews({R.id.title1, R.id.title2, R.id.title3})
         List<TextView> mText;
 
+        @InjectViews({R.id.txtBody1, R.id.txtBody2, R.id.txtBody3})
+        List<CustomTextView> excerpts;
+
         public VH2(View v) {
             ButterKnife.inject(this, v);
+        }
+
+        public List<CustomTextView> getExcerpts() {
+            return excerpts;
         }
 
         public TopAlignedImageView getSplash1() {

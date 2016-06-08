@@ -2,6 +2,7 @@ package net.glassstones.thediarymagazine;
 
 import android.app.Application;
 import android.content.Context;
+import android.os.AsyncTask;
 import android.util.Log;
 import android.view.View;
 
@@ -10,11 +11,23 @@ import com.parse.ParseInstallation;
 import com.parse.ParseUser;
 import com.wang.avi.AVLoadingIndicatorView;
 
+import net.glassstones.thediarymagazine.di.components.DaggerNetComponent;
+import net.glassstones.thediarymagazine.di.components.DaggerTdmComponent;
+import net.glassstones.thediarymagazine.di.components.NetComponent;
+import net.glassstones.thediarymagazine.di.components.TdmComponent;
+import net.glassstones.thediarymagazine.di.modules.AppModule;
+import net.glassstones.thediarymagazine.di.modules.NetModule;
+import net.glassstones.thediarymagazine.di.modules.TdmModule;
+import net.glassstones.thediarymagazine.interfaces.network.TDMAPIClient;
+import net.glassstones.thediarymagazine.models.NI;
 import net.glassstones.thediarymagazine.models.NewsCluster;
 import net.glassstones.thediarymagazine.models.NewsItem;
+import net.glassstones.thediarymagazine.network.ServiceGenerator;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import retrofit.Retrofit;
 
 /**
  * Created by Thompson on 04/02/2016.
@@ -22,7 +35,6 @@ import java.util.List;
  */
 public class Common extends Application {
 
-    public static volatile Context applicationContext;
     public static final String KEY_FIRST_RUN = "first_run";
     public static final String[] imageUrl = {
             "http://www.bellanaija.com/wp-content/uploads/2016/02/image-7-600x953.jpg",
@@ -51,58 +63,32 @@ public class Common extends Application {
             "http://www.bellanaija.com/wp-content/uploads/2012/10/DJ-Jimmy-Jatt-3.jpg",
             "https://consequenceofsound.files.wordpress.com/2015/04/britney-spears.jpg?w=807"
     };
-    public static final String[] titles = {
-            "Ade Bakare Debuts Colourful Ankara Range Collection + Lookbook Review",
-            "Look furry nice in Kendall’s luxurious outerwear",
-            "Tuface wrote his new hit song while driving",
-            "Falz and Simi hookup!",
-            "DOWNLOAD: adekunleGOLD - Sade",
-            "Mohits reunite! Don Jazzy and D'banj get back to record a new single",
-            "AXED!!! LVG sacked after massive loss",
-            "CBN governor caught in insider trading scandal",
-            "Nigerians now have uninterrupted power supply",
-            "'I will marry when I feel like' - Sunday Oliseh",
-            "Sales! Nike sneaker at half the price",
-            "Jose snubbed for Manchester United job",
-            "Samsung recalls one million Galaxy s7",
-            "Nollywood hunk, Daniel K Daniel dapper in new pics, reveals his love for Seyi Shay",
-            "K.Dot gets Grammy nod",
-            "Wizkid baby mama palaver: New women surface",
-            "Omojuwa eviscerates Sen. Ben Bruce on Twitter",
-            "Uzo Aduba in Nollywood flick",
-            "Leo snubbed, AGAIN!",
-            "Kenny Rogers finally retires",
-            "Spring collection",
-            "Trevor Noah hit with sexual harassment suit",
-            "50 cent NOT broke - Baby mama",
-            "Jimmy Jatt has a new Hat line and it sucks",
-            "Britney back to rehab!"
-    };
+
+    public static volatile Context applicationContext;
+    private static TdmComponent mTDMComponent;
+    private static Retrofit retrofit;
+    private NetComponent mNetComponent;
 
     public static void loadingStatus(AVLoadingIndicatorView loadingView, boolean isLoading) {
         loadingView.setVisibility(isLoading ? View.VISIBLE : View.INVISIBLE);
     }
 
-    public static List<NewsItem> getDemoNews() {
+    public static Retrofit getRetrofit() {
+        return retrofit;
+    }
+
+    private static List<NewsItem> getDemoNews(ArrayList<NI> posts) {
         List<NewsItem> list = new ArrayList<>();
-        for (int i = 0; i < imageUrl.length; i++) {
+        for (int i = 0; i < posts.size(); i++) {
             NewsItem item = new NewsItem();
             item.setImageUrl(imageUrl[i]);
-            item.setTitle(titles[i]);
+            item.setPost(posts.get(i));
             list.add(item);
         }
         return list;
     }
 
-    public static List<NewsCluster> getNewsCluster() {
-
-        List<NewsItem> list = new ArrayList<>();
-        for (int i = 0; i < imageUrl.length; i++) {
-            NewsItem item = new NewsItem();
-            item.setImageUrl(imageUrl[i]);
-            item.setTitle(titles[i]);
-            list.add(item);
-        }
+    private static List<NewsCluster> getNewsCluster(List<NewsItem> list) {
 
         List<NewsCluster> cluster = new ArrayList<>();
 
@@ -112,7 +98,6 @@ public class Common extends Application {
 
         int currentNewsSize = list.size();
         int[] keys = {2, 3, 2, 3, 1, 2, 3, 2, 3, 2, 1};
-        int key = 0;
 
         NewsCluster nc;
         nc = new NewsCluster();
@@ -128,7 +113,7 @@ public class Common extends Application {
                         cluster.add(nc);
                     }
                 } catch (Exception e) {
-                    Log.e("ERROR", e.getMessage());
+                    Log.e(Common.class.getSimpleName(), e.getMessage());
                 }
                 currentIndex++;
                 currentNewsSize--;
@@ -139,11 +124,30 @@ public class Common extends Application {
         return cluster;
     }
 
+    public static List<NewsCluster> getNewsCluster(ArrayList<NI> posts) {
+        final List<NewsItem> items = getDemoNews(posts);
+
+        return getNewsCluster(items);
+    }
+
+    public static TdmComponent getTDMComponent() {
+        return mTDMComponent;
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
 
         applicationContext = getApplicationContext();
+
+        mNetComponent = DaggerNetComponent.builder()
+                .appModule(new AppModule(this))
+                .netModule(new NetModule("http://www.thediarymagazine.com"))
+                .build();
+        mTDMComponent = DaggerTdmComponent.builder()
+                .netComponent(mNetComponent)
+                .tdmModule(new TdmModule())
+                .build();
 
         Parse.initialize(new Parse.Configuration.Builder(this)
                 .applicationId("myAppId")
@@ -153,7 +157,10 @@ public class Common extends Application {
         ParseUser.enableAutomaticUser();
         ParseUser.getCurrentUser().increment("RunCount");
         ParseUser.getCurrentUser().saveInBackground();
+
     }
 
-
+    public NetComponent getNetComponent() {
+        return mNetComponent;
+    }
 }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="notification_validity_days">2</integer>
+    <integer name="max_init_post">150</integer>
+    <integer name="max_update_post">15</integer>
+</resources>

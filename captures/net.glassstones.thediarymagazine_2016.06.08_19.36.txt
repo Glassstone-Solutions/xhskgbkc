@@ -1,0 +1,38 @@
+Applications Memory Usage (kB):
+Uptime: 3772120 Realtime: 3772120
+
+** MEMINFO in pid 23270 [net.glassstones.thediarymagazine] **
+                   Pss  Private  Private  Swapped     Heap     Heap     Heap
+                 Total    Dirty    Clean    Dirty     Size    Alloc     Free
+                ------   ------   ------   ------   ------   ------   ------
+  Native Heap    10571    10428        0        0    21663    21663     2912
+  Dalvik Heap    27610    27548        0        0    30104    26201     3903
+ Dalvik Other      428      428        0        0                           
+        Stack      284      284        0        0                           
+    Other dev        4        0        4        0                           
+     .so mmap     1840      152      156        0                           
+    .apk mmap      524        0      288        0                           
+    .ttf mmap      126        0        0        0                           
+    .dex mmap     8404        0     8192        0                           
+    code mmap     2410        0      452        0                           
+   image mmap     7075     6860        4        0                           
+   Other mmap       45        4        8        0                           
+      Unknown      126      124        0        0                           
+        TOTAL    59447    45828     9104        0    51767    47864     6815
+ 
+ Objects
+               Views:       61         ViewRootImpl:        1
+         AppContexts:        3           Activities:        1
+              Assets:        4        AssetManagers:        4
+       Local Binders:       11        Proxy Binders:       15
+    Death Recipients:        0
+     OpenSSL Sockets:        0
+ 
+ SQL
+         MEMORY_USED:        0
+  PAGECACHE_OVERFLOW:        0          MALLOC_SIZE:        0
+ 
+ 
+ Asset Allocations
+    zip:/data/app/net.glassstones.thediarymagazine-1/base.apk:/assets/fonts/FiraSans_Regular.otf: 285K
+    zip:/data/app/net.glassstones.thediarymagazine-1/base.apk:/assets/fonts/Geometria_Light.otf: 129K

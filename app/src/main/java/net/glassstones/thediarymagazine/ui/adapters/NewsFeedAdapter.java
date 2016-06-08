@@ -13,9 +13,7 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 
-import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
-import net.glassstones.thediarymagazine.utils.UIUtils;
 import net.glassstones.thediarymagazine.models.NewsCluster;
 import net.glassstones.thediarymagazine.models.NewsItem;
 import net.glassstones.thediarymagazine.ui.viewholders.MainNewsItemHolder;
@@ -23,6 +21,7 @@ import net.glassstones.thediarymagazine.ui.viewholders.VH1;
 import net.glassstones.thediarymagazine.ui.viewholders.VH2;
 import net.glassstones.thediarymagazine.ui.widgets.CustomTextView;
 import net.glassstones.thediarymagazine.ui.widgets.TopAlignedImageView;
+import net.glassstones.thediarymagazine.utils.UIUtils;
 
 import java.util.List;
 
@@ -48,7 +47,6 @@ public class NewsFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
     public NewsFeedAdapter(Context c) {
         this.context = c;
-        this.items = Common.getNewsCluster();
         this.cellSize = UIUtils.getScreenWidth(context) / 2;
     }
 
@@ -114,9 +112,9 @@ public class NewsFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
             setImage(ni, i);
 
-            vh.getTitle().setText(ni.getTitle());
+            vh.getTitle().setText(ni.getPost().getTitle().getTitle());
 
-            if (ni.getTitle().length() > 55) {
+            if (ni.getPost().getTitle().getTitle().length() > 55) {
                 setTextSize(vh.getTitle(), 18);
             }
 
@@ -133,8 +131,8 @@ public class NewsFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 NewsItem ni = items.get(position).getItems().get(0);
                 setImage(ni, img);
 
-                t.setText(ni.getTitle());
-                if (ni.getTitle().length() > 55) {
+                t.setText(ni.getPost().getTitle().getTitle());
+                if (ni.getPost().getTitle().getTitle().length() > 55) {
                     setTextSize(t, 18);
                 }
             }
@@ -153,7 +151,7 @@ public class NewsFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     t1 = vh.getTitle1();
                     i1 = vh.getSplash1();
 
-                    t1.setText(ni.getTitle());
+                    t1.setText(ni.getPost().getTitle().getTitle());
                     setImage(ni, i1);
 
                     setTextSize(t1, 18);
@@ -162,7 +160,7 @@ public class NewsFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     t2 = vh.getTitle2();
                     i2 = vh.getSplash2();
 
-                    t2.setText(ni.getTitle());
+                    t2.setText(ni.getPost().getTitle().getTitle());
                     setImage(ni, i2);
 
                     setTextSize(t2, 18);
@@ -181,7 +179,7 @@ public class NewsFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     t1 = vh.getTitle1();
                     i1 = vh.getSplash1();
 
-                    t1.setText(ni.getTitle());
+                    t1.setText(ni.getPost().getTitle().getTitle());
                     setImage(ni, i1);
 
                     setTextSize(t1, 18);
@@ -190,7 +188,7 @@ public class NewsFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     t2 = vh.getTitle2();
                     i2 = vh.getSplash2();
 
-                    t2.setText(ni.getTitle());
+                    t2.setText(ni.getPost().getTitle().getTitle());
                     setImage(ni, i2);
 
                     setTextSize(t2, 14);
@@ -199,7 +197,7 @@ public class NewsFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     t3 = vh.getTitle3();
                     i3 = vh.getSplash3();
 
-                    t3.setText(ni.getTitle());
+                    t3.setText(ni.getPost().getTitle().getTitle());
                     setImage(ni, i3);
 
                     setTextSize(t3, 14);
