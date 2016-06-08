@@ -89,7 +89,7 @@ public class NewsFragment extends BaseNewsFragment implements Callback, FlipView
 
     @Override
     public int limit() {
-        return 10;
+        return 25;
     }
 
     @Override
