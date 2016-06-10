@@ -102,6 +102,11 @@ public class NewsFragment extends BaseNewsFragment implements Callback, FlipView
         return this.getClass();
     }
 
+    @Override
+    public String slug() {
+        return null;
+    }
+
 
     @Override
     public void onPostResponse(Response<ArrayList<NI>> response) {

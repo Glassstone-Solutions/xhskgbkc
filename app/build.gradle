@@ -91,5 +91,8 @@ dependencies {
     compile 'com.squareup.retrofit:retrofit:2.0.0-beta2'
     compile 'com.squareup.retrofit:converter-gson:2.0.0-beta2'
     compile 'com.squareup.okhttp:okhttp:2.4.0'
+
+    compile 'com.airbnb:deeplinkdispatch:2.0.1'
+    apt 'com.airbnb:deeplinkdispatch-processor:2.0.1'
 }
 apply plugin: 'com.google.gms.google-services'

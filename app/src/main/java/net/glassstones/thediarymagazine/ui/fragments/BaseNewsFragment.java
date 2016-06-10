@@ -50,6 +50,8 @@ public abstract class BaseNewsFragment extends Fragment implements NetworkOperat
 
     public abstract Class clazz();
 
+    public abstract String slug();
+
     Tracker mTracker;
 
     @Override
@@ -72,7 +74,7 @@ public abstract class BaseNewsFragment extends Fragment implements NetworkOperat
 
         TDMAPIClient client = sg.createService(TDMAPIClient.class);
 
-        Call<ArrayList<NI>> call = client.getPosts(limit(), skip());
+        Call<ArrayList<NI>> call = client.getPosts(limit(), skip(), slug());
 
         Request request = new Request(call);
 

@@ -16,7 +16,7 @@ import retrofit.http.Query;
  */
 public interface TDMAPIClient {
     @GET("wp-json/wp/v2/posts")
-    Call<ArrayList<NI>> getPosts(@Query("limit") int limit, @Query("skip") int skip);
+    Call<ArrayList<NI>> getPosts(@Query("limit") int limit, @Query("skip") int skip, @Query("slug") String slug);
     @GET("wp-json/wp/v2/media/{id}")
     Call<WPMedia> getMedia(@Path("id") int id);
 }

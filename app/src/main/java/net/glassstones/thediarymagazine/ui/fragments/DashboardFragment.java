@@ -123,8 +123,6 @@ public class DashboardFragment extends Fragment {
 
             textView.setText(labels[position]);
             Glide.with(getActivity()).load(images[position]).into(bg);
-//            bg.setImageDrawable(ContextCompat.getDrawable(getActivity(), images[position]));
-            Log.e(TAG, String.valueOf(position));
         }
 
         private void bindFooter(CatViewFooterHolder holder) {

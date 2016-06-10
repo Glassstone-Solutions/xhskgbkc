@@ -9,10 +9,10 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.airbnb.deeplinkdispatch.DeepLink;
 import com.parse.ParseUser;
 
 import net.glassstones.thediarymagazine.Common;
@@ -28,7 +28,8 @@ import java.util.List;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 
-public class NewsFeedActivity extends AppCompatActivity {
+
+public class NewsFeedActivity extends BaseActivity {
 
     @InjectView(R.id.menu_tab)
     TabLayout mTabLayout;
@@ -72,8 +73,15 @@ public class NewsFeedActivity extends AppCompatActivity {
     }
 
     private void init() {
-        setContentView(R.layout.activity_news_feed);
-        ButterKnife.inject(this);
+
+        Intent intent = getIntent();
+        if (intent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
+            Bundle parameters = intent.getExtras();
+            String idString = parameters.getString("id");
+            Intent i = new Intent(this, NewsDetailsActivity.class);
+            i.putExtra("post_id", Integer.valueOf(idString));
+            startActivity(i);
+        }
 
         setupViewPager(mPager);
         mTabLayout.setupWithViewPager(mPager);
@@ -145,6 +153,16 @@ public class NewsFeedActivity extends AppCompatActivity {
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public Class clazz() {
+        return this.getClass();
+    }
+
+    @Override
+    public int resourceId() {
+        return R.layout.activity_news_feed;
     }
 
     private class MyFragmentAdapter extends FragmentPagerAdapter {

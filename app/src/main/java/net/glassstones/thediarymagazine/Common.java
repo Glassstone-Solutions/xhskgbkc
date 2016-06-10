@@ -2,9 +2,11 @@ package net.glassstones.thediarymagazine;
 
 import android.app.Application;
 import android.content.Context;
-import android.util.Log;
+import android.content.IntentFilter;
+import android.support.v4.content.LocalBroadcastManager;
 import android.view.View;
 
+import com.airbnb.deeplinkdispatch.DeepLinkHandler;
 import com.google.android.gms.analytics.ExceptionReporter;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
@@ -23,6 +25,7 @@ import net.glassstones.thediarymagazine.di.modules.TdmModule;
 import net.glassstones.thediarymagazine.models.NI;
 import net.glassstones.thediarymagazine.models.NewsCluster;
 import net.glassstones.thediarymagazine.models.NewsItem;
+import net.glassstones.thediarymagazine.receivers.DeepLinkReceiver;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,7 +117,7 @@ public class Common extends Application {
                         cluster.add(nc);
                     }
                 } catch (Exception e) {
-                    Log.e(Common.class.getSimpleName(), e.getMessage());
+//                    Log.e(Common.class.getSimpleName(), e.getMessage());
                 }
                 currentIndex++;
                 currentNewsSize--;
@@ -180,6 +183,9 @@ public class Common extends Application {
 
         // Make myHandler the new default uncaught exception handler.
         Thread.setDefaultUncaughtExceptionHandler(myHandler);
+
+        IntentFilter intentFilter = new IntentFilter(DeepLinkHandler.ACTION);
+        LocalBroadcastManager.getInstance(this).registerReceiver(new DeepLinkReceiver(), intentFilter);
 
     }
 
