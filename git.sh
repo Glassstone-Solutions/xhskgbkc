@@ -1,5 +1,6 @@
 #!/bin/sh
 cd /c/Users/Thompson/AndroidStudioProjects/TheDiaryMagazine
+git status
 echo -n "Enter branch commit message: "
 read message
 # git checkout dev
