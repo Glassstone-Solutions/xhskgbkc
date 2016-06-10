@@ -17,6 +17,7 @@ import com.parse.ParseUser;
 
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
+import net.glassstones.thediarymagazine.ui.fragments.DashboardFragment;
 import net.glassstones.thediarymagazine.ui.fragments.NewsFragment;
 import net.glassstones.thediarymagazine.ui.fragments.UnderConstructionFragment;
 import net.glassstones.thediarymagazine.utils.HelperSharedPreferences;
@@ -118,7 +119,7 @@ public class NewsFeedActivity extends AppCompatActivity {
         MyFragmentAdapter adapter = new MyFragmentAdapter(getSupportFragmentManager());
 
         adapter.addFrag(new NewsFragment());
-        adapter.addFrag(UnderConstructionFragment.newInstance(defaultTabIcons[1], "Dashboard"));
+        adapter.addFrag(new DashboardFragment());
         adapter.addFrag(UnderConstructionFragment.newInstance(defaultTabIcons[2], "Search"));
         adapter.addFrag(UnderConstructionFragment.newInstance(defaultTabIcons[3], "Favorites"));
         adapter.addFrag(UnderConstructionFragment.newInstance(defaultTabIcons[4], "Shopping"));

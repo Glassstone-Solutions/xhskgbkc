@@ -71,10 +71,6 @@ public abstract class BaseNewsFragment extends Fragment implements NetworkOperat
     @Override
     public void onPostResponse(Response<ArrayList<NI>> response) {
         posts = response.body();
-
-        for (NI post : posts) {
-            Log.e(TAG, post.getTitle().getTitle());
-        }
     }
 
     @Override

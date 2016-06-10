@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <net.glassstones.thediarymagazine.ui.widgets.ImageViewTopCrop
+        android:id="@+id/bg.img"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="matrix"/>
+
+    <FrameLayout
+        android:id="@+id/scrim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#ba434343"/>
+
+    <net.glassstones.thediarymagazine.ui.widgets.CustomTextView
+        android:id="@+id/label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:text="Label"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        app:font="@string/fira"
+        />
+
+</RelativeLayout>

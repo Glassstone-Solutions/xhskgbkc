@@ -106,7 +106,6 @@ public class NewsFragment extends BaseNewsFragment implements Callback, FlipView
     @Override
     public void onPostResponse(Response<ArrayList<NI>> response) {
         super.onPostResponse(response);
-        Log.e(TAG, String.valueOf(response.body().size()));
 
         clusters = Common.getNewsCluster(response.body());
 
