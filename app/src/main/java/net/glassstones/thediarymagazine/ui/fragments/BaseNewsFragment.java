@@ -7,6 +7,9 @@ import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.View;
 
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
+
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.interfaces.network.NetworkOperations;
 import net.glassstones.thediarymagazine.interfaces.network.TDMAPIClient;
@@ -47,12 +50,22 @@ public abstract class BaseNewsFragment extends Fragment implements NetworkOperat
 
     public abstract Class clazz();
 
+    Tracker mTracker;
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Common app = (Common) getActivity().getApplication();
+        mTracker = app.getDefaultTracker();
+        mTracker.setScreenName(TAG);
+        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
+
+        Common.getTDMComponent().inject(this);
+    }
+
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        Common.getTDMComponent().inject(this);
-
-
         clusters = new ArrayList<>();
 
         ServiceGenerator sg = new ServiceGenerator((Common) getActivity().getApplication());

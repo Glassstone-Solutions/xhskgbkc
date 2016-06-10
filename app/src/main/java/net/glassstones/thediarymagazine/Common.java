@@ -2,10 +2,12 @@ package net.glassstones.thediarymagazine;
 
 import android.app.Application;
 import android.content.Context;
-import android.os.AsyncTask;
 import android.util.Log;
 import android.view.View;
 
+import com.google.android.gms.analytics.ExceptionReporter;
+import com.google.android.gms.analytics.GoogleAnalytics;
+import com.google.android.gms.analytics.Tracker;
 import com.parse.Parse;
 import com.parse.ParseInstallation;
 import com.parse.ParseUser;
@@ -18,11 +20,9 @@ import net.glassstones.thediarymagazine.di.components.TdmComponent;
 import net.glassstones.thediarymagazine.di.modules.AppModule;
 import net.glassstones.thediarymagazine.di.modules.NetModule;
 import net.glassstones.thediarymagazine.di.modules.TdmModule;
-import net.glassstones.thediarymagazine.interfaces.network.TDMAPIClient;
 import net.glassstones.thediarymagazine.models.NI;
 import net.glassstones.thediarymagazine.models.NewsCluster;
 import net.glassstones.thediarymagazine.models.NewsItem;
-import net.glassstones.thediarymagazine.network.ServiceGenerator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +68,7 @@ public class Common extends Application {
     private static TdmComponent mTDMComponent;
     private static Retrofit retrofit;
     private NetComponent mNetComponent;
+    private Tracker mTracker;
 
     public static void loadingStatus(AVLoadingIndicatorView loadingView, boolean isLoading) {
         loadingView.setVisibility(isLoading ? View.VISIBLE : View.INVISIBLE);
@@ -134,6 +135,20 @@ public class Common extends Application {
         return mTDMComponent;
     }
 
+    /**
+     * Gets the default {@link Tracker} for this {@link Application}.
+     *
+     * @return tracker
+     */
+    synchronized public Tracker getDefaultTracker() {
+        if (mTracker == null) {
+            GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
+            // To enable debug logging use: adb shell setprop log.tag.GAv4 DEBUG
+            mTracker = analytics.newTracker(R.xml.global_tracker);
+        }
+        return mTracker;
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
@@ -157,6 +172,14 @@ public class Common extends Application {
         ParseUser.enableAutomaticUser();
         ParseUser.getCurrentUser().increment("RunCount");
         ParseUser.getCurrentUser().saveInBackground();
+
+        Thread.UncaughtExceptionHandler myHandler = new ExceptionReporter(
+                this.getDefaultTracker(),
+                Thread.getDefaultUncaughtExceptionHandler(),
+                this);
+
+        // Make myHandler the new default uncaught exception handler.
+        Thread.setDefaultUncaughtExceptionHandler(myHandler);
 
     }
 

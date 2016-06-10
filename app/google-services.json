@@ -1,0 +1,38 @@
+{
+  "project_info": {
+    "project_number": "478695949457",
+    "project_id": "api-project-478695949457"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:478695949457:android:2e0be5e5916198e4",
+        "android_client_info": {
+          "package_name": "net.glassstones.thediarymagazine"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCO9G9doucSilCt0t2QBPrDJtWi6kLFHNQ"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 2,
+          "analytics_property": {
+            "tracking_id": "UA-71604058-2"
+          }
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
