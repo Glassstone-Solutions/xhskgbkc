@@ -7,5 +7,6 @@ read message
 git add .
 git commit -am "$message"
 # git push
+gradle :app:assembleRelease
 echo Press Enter...
 read
