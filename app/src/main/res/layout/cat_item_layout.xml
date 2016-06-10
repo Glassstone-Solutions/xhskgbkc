@@ -4,11 +4,11 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <net.glassstones.thediarymagazine.ui.widgets.ImageViewTopCrop
+    <ImageView
         android:id="@+id/bg.img"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scaleType="matrix"/>
+        android:scaleType="centerCrop"/>
 
     <FrameLayout
         android:id="@+id/scrim"

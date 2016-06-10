@@ -7,9 +7,13 @@ import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
+
+import com.bumptech.glide.Glide;
 
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.ui.activities.LoginActivity;
@@ -30,6 +34,16 @@ public class DashboardFragment extends Fragment {
 
     @InjectView(R.id.cat_list)
     RecyclerView list;
+    String[] labels = {"News", "Business", "Entertainment", "Sports", "Lifestyle", "Well Being"};
+    int[] cat_id = {20, 4, 27, 14, 34, 37};
+    int[] images = {
+            R.drawable.img_news,
+            R.drawable.img_business,
+            R.drawable.img_entertainment,
+            R.drawable.img_sports,
+            R.drawable.img_lifestyle,
+            R.drawable.img_wellbeing
+    };
 
     CategoryAdapter adapter;
 
@@ -41,6 +55,7 @@ public class DashboardFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
+        adapter = new CategoryAdapter();
         View view = inflater.inflate(R.layout.fragment_dashboard, container, false);
         ButterKnife.inject(this, view);
         return view;
@@ -49,7 +64,6 @@ public class DashboardFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        adapter = new CategoryAdapter();
         list.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
         list.setAdapter(adapter);
     }
@@ -64,18 +78,10 @@ public class DashboardFragment extends Fragment {
 
         private static final int TYPE_CAT = 0;
         private static final int TYPE_MORE = 1;
+        private final String TAG = CategoryAdapter.class.getSimpleName();
         private final int cellSize;
         int mutedColor = R.attr.colorPrimary;
-        String[] labels = {"News", "Business", "Entertainment", "Sports", "Lifestyle", "Well Being"};
-        int[] cat_id = {20, 4, 27, 14, 34, 37};
-        int[] images = {
-                R.drawable.img_news,
-                R.drawable.img_business,
-                R.drawable.img_entertainment,
-                R.drawable.img_sports,
-                R.drawable.img_lifestyle,
-                R.drawable.img_wellbeing
-        };
+
 
         public CategoryAdapter() {
             this.cellSize = UIUtils.getScreenWidth(getActivity()) / 2;
@@ -112,11 +118,13 @@ public class DashboardFragment extends Fragment {
 
         private void bindCat(CatViewHolder holder, int position) {
             CustomTextView textView = holder.getLabel();
-            ImageViewTopCrop bg = holder.getBg();
+            ImageView bg = holder.getBg();
 
 
             textView.setText(labels[position]);
-            bg.setImageDrawable(ContextCompat.getDrawable(getActivity(), images[position]));
+            Glide.with(getActivity()).load(images[position]).into(bg);
+//            bg.setImageDrawable(ContextCompat.getDrawable(getActivity(), images[position]));
+            Log.e(TAG, String.valueOf(position));
         }
 
         private void bindFooter(CatViewFooterHolder holder) {
@@ -139,7 +147,7 @@ public class DashboardFragment extends Fragment {
 
         class CatViewHolder extends RecyclerView.ViewHolder {
             @InjectView(R.id.bg_img)
-            ImageViewTopCrop bg;
+            ImageView bg;
             @InjectView(R.id.label)
             CustomTextView label;
 
@@ -157,7 +165,7 @@ public class DashboardFragment extends Fragment {
                 getActivity().startActivity(i);
             }
 
-            public ImageViewTopCrop getBg() {
+            public ImageView getBg() {
                 return bg;
             }
 
