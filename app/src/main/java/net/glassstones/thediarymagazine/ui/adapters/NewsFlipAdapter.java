@@ -10,9 +10,12 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
@@ -51,6 +54,21 @@ public class NewsFlipAdapter extends BaseAdapter {
     private LayoutInflater inflater;
     private Callback callback;
     private TDMAPIClient client;
+    private Tracker mTracker;
+
+    private View.OnClickListener listener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            NewsItem item = (NewsItem) v.getTag();
+            if (item != null && callback != null) {
+                callback.onPageRequested(item);
+                mTracker.send(new HitBuilders.EventBuilder()
+                        .setCategory("Action")
+                        .setAction("Read_Post")
+                        .build());
+            }
+        }
+    };
 
     public NewsFlipAdapter(Context c, List<NewsCluster> i) {
         this.context = c;
@@ -60,6 +78,8 @@ public class NewsFlipAdapter extends BaseAdapter {
         ServiceGenerator sg = new ServiceGenerator((Common) context.getApplicationContext());
 
         client = sg.createService(TDMAPIClient.class);
+
+        mTracker = ((Common) context.getApplicationContext()).getDefaultTracker();
 
     }
 
@@ -175,7 +195,8 @@ public class NewsFlipAdapter extends BaseAdapter {
 
     private void bindHeadline(int position, ViewHolder v) {
         if (v instanceof Headline) {
-            NewsItem item = items.get(position).getItems().get(0);
+            final NewsItem item = items.get(position).getItems().get(0);
+
             Headline vh = (Headline) v;
             ImageView splash = vh.getmSplash();
             setImage(item, splash);
@@ -183,6 +204,9 @@ public class NewsFlipAdapter extends BaseAdapter {
             t.setText(Html.fromHtml(item.getPost().getTitle().getTitle()));
             CustomTextView ct = vh.getExcerpt();
             ct.setText(Html.fromHtml(item.getPost().getExcerpt().getExcerpt()));
+
+            vh.getRoot().setTag(item);
+            vh.getRoot().setOnClickListener(listener);
         }
     }
 
@@ -191,6 +215,8 @@ public class NewsFlipAdapter extends BaseAdapter {
             VH1 vh = (VH1) v;
             TextView t1, t2;
             TopAlignedImageView i1, i2;
+
+            RelativeLayout root;
 
             for (int ii = 0; ii < items.get(position).getItems().size(); ii++) {
                 if (ii == 0) {
@@ -206,6 +232,12 @@ public class NewsFlipAdapter extends BaseAdapter {
                     CustomTextView ct = vh.getExcerpts().get(0);
 
                     ct.setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
+
+                    root = vh.getRoot().get(0);
+
+                    root.setTag(ni);
+                    root.setOnClickListener(listener);
+
                 } else {
                     NewsItem ni = items.get(position).getItems().get(1);
                     t2 = vh.getTitle2();
@@ -219,6 +251,12 @@ public class NewsFlipAdapter extends BaseAdapter {
                     CustomTextView ct = vh.getExcerpts().get(1);
 
                     ct.setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
+
+                    root = vh.getRoot().get(1);
+
+                    root.setTag(ni);
+                    root.setOnClickListener(listener);
+
                 }
             }
 
@@ -246,6 +284,12 @@ public class NewsFlipAdapter extends BaseAdapter {
                     CustomTextView ct = vh.getExcerpts().get(0);
 
                     ct.setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
+
+                    RelativeLayout root = vh.getRoot1();
+
+                    root.setTag(ni);
+                    root.setOnClickListener(listener);
+
                 } else if (ii == 1) {
                     NewsItem ni = items.get(position).getItems().get(1);
                     t2 = vh.getTitle2();
@@ -259,6 +303,11 @@ public class NewsFlipAdapter extends BaseAdapter {
                     CustomTextView ct = vh.getExcerpts().get(1);
 
                     ct.setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
+
+                    LinearLayout root = vh.getRootBottom().get(0);
+
+                    SetTagAndListener(ni, root);
+
                 } else {
                     NewsItem ni = items.get(position).getItems().get(2);
                     t3 = vh.getTitle3();
@@ -272,6 +321,11 @@ public class NewsFlipAdapter extends BaseAdapter {
                     CustomTextView ct = vh.getExcerpts().get(2);
 
                     ct.setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
+
+                    LinearLayout root = vh.getRootBottom().get(1);
+
+                    SetTagAndListener(ni, root);
+
                 }
             }
 
@@ -287,15 +341,28 @@ public class NewsFlipAdapter extends BaseAdapter {
 
             setImage(ni, i);
 
-            vh.getTitle().setText(Html.fromHtml(ni.getPost().getTitle().getTitle()));
+            TextView t = vh.getTitle();
+
+            t.setText(Html.fromHtml(ni.getPost().getTitle().getTitle()));
 
             if (ni.getPost().getTitle().getTitle().length() > 55) {
                 setTextSize(vh.getTitle(), 18);
             }
 
-            vh.getBody().setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
+            CustomTextView ct = vh.getBody();
+
+            ct.setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
+
+            LinearLayout root = vh.getmRoot();
+
+            SetTagAndListener(ni, root);
 
         }
+    }
+
+    private void SetTagAndListener(NewsItem ni, LinearLayout root) {
+        root.setTag(ni);
+        root.setOnClickListener(listener);
     }
 
     private void setImage(final NewsItem ni, final ImageView i) {
@@ -335,6 +402,8 @@ public class NewsFlipAdapter extends BaseAdapter {
         TextView mTitle;
         @InjectView(R.id.txtBody1)
         CustomTextView mExcerpt;
+        @InjectView(R.id.root)
+        RelativeLayout root;
 
         public Headline(View v) {
             ButterKnife.inject(this, v);
@@ -351,6 +420,10 @@ public class NewsFlipAdapter extends BaseAdapter {
         public CustomTextView getExcerpt() {
             return mExcerpt;
         }
+
+        public RelativeLayout getRoot() {
+            return root;
+        }
     }
 
     static class VH1 extends ViewHolder {
@@ -360,6 +433,8 @@ public class NewsFlipAdapter extends BaseAdapter {
         List<TextView> mText;
         @InjectViews({R.id.txtBody1, R.id.txtBody2})
         List<CustomTextView> excerpts;
+        @InjectViews({R.id.root1, R.id.root2})
+        List<RelativeLayout> root;
 
         public VH1(View v) {
             ButterKnife.inject(this, v);
@@ -384,6 +459,10 @@ public class NewsFlipAdapter extends BaseAdapter {
         public List<CustomTextView> getExcerpts() {
             return excerpts;
         }
+
+        public List<RelativeLayout> getRoot() {
+            return root;
+        }
     }
 
     static class VH2 extends ViewHolder {
@@ -394,6 +473,11 @@ public class NewsFlipAdapter extends BaseAdapter {
 
         @InjectViews({R.id.txtBody1, R.id.txtBody2, R.id.txtBody3})
         List<CustomTextView> excerpts;
+
+        @InjectView(R.id.root1)
+        RelativeLayout root1;
+        @InjectViews({R.id.root2, R.id.root3})
+        List<LinearLayout> rootBottom;
 
         public VH2(View v) {
             ButterKnife.inject(this, v);
@@ -426,6 +510,14 @@ public class NewsFlipAdapter extends BaseAdapter {
         public TextView getTitle3() {
             return mText.get(2);
         }
+
+        public RelativeLayout getRoot1() {
+            return root1;
+        }
+
+        public List<LinearLayout> getRootBottom() {
+            return rootBottom;
+        }
     }
 
     static class VH3 extends ViewHolder {
@@ -450,6 +542,10 @@ public class NewsFlipAdapter extends BaseAdapter {
 
         public CustomTextView getBody() {
             return mText.get(1);
+        }
+
+        public LinearLayout getmRoot() {
+            return mRoot;
         }
     }
 

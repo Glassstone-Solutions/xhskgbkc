@@ -1,0 +1,10 @@
+html{
+    background-color: #fff;
+}
+.pvc_stats{
+    display: none;
+}
+
+p:first-child{
+    margin-top : 16px;
+}

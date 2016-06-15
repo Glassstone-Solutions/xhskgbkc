@@ -1,6 +1,7 @@
 package net.glassstones.thediarymagazine.ui.fragments;
 
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -13,6 +14,7 @@ import net.glassstones.thediarymagazine.interfaces.Callback;
 import net.glassstones.thediarymagazine.models.NI;
 import net.glassstones.thediarymagazine.models.NewsCluster;
 import net.glassstones.thediarymagazine.models.NewsItem;
+import net.glassstones.thediarymagazine.ui.activities.NewsDetailsActivity;
 import net.glassstones.thediarymagazine.ui.adapters.NewsFlipAdapter;
 
 import java.util.ArrayList;
@@ -74,7 +76,9 @@ public class NewsFragment extends BaseNewsFragment implements Callback, FlipView
 
     @Override
     public void onPageRequested(NewsItem newsItem) {
-
+        Intent i = new Intent(getActivity(), NewsDetailsActivity.class);
+        i.putExtra("post_id", newsItem.getPost().getId());
+        getActivity().startActivity(i);
     }
 
     @Override

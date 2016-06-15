@@ -54,10 +54,12 @@ public abstract class BaseNewsFragment extends Fragment implements NetworkOperat
 
     Tracker mTracker;
 
+    Common app;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Common app = (Common) getActivity().getApplication();
+        app = (Common) getActivity().getApplication();
         mTracker = app.getDefaultTracker();
         mTracker.setScreenName(TAG);
         mTracker.send(new HitBuilders.ScreenViewBuilder().build());
@@ -70,7 +72,7 @@ public abstract class BaseNewsFragment extends Fragment implements NetworkOperat
         super.onViewCreated(view, savedInstanceState);
         clusters = new ArrayList<>();
 
-        ServiceGenerator sg = new ServiceGenerator((Common) getActivity().getApplication());
+        ServiceGenerator sg = new ServiceGenerator(app);
 
         TDMAPIClient client = sg.createService(TDMAPIClient.class);
 
