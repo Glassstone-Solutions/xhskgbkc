@@ -1,6 +1,7 @@
 package net.glassstones.thediarymagazine.ui.adapters;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.text.Html;
 import android.util.Log;
 import android.util.TypedValue;
@@ -14,6 +15,8 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.animation.GlideAnimation;
+import com.bumptech.glide.request.target.SimpleTarget;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 
@@ -28,6 +31,7 @@ import net.glassstones.thediarymagazine.network.ServiceGenerator;
 import net.glassstones.thediarymagazine.ui.widgets.CustomTextView;
 import net.glassstones.thediarymagazine.ui.widgets.TopAlignedImageView;
 
+import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 import butterknife.ButterKnife;
@@ -372,7 +376,20 @@ public class NewsFlipAdapter extends BaseAdapter {
             @Override
             public void onResponse(Response<WPMedia> response, Retrofit retrofit) {
                 String url = response.body().getSource_url();
-                Glide.with(context).load(url != null ? url : "").into(i);
+                ni.getPost().setMedia(response.body());
+                Glide.with(context)
+                        .load(url != null ? url : "")
+                        .asBitmap()
+                        .into(new SimpleTarget<Bitmap>() {
+                            @Override
+                            public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                                resource.compress(Bitmap.CompressFormat.JPEG,100, stream);
+                                byte[] byteArray = stream.toByteArray();
+                                ni.getPost().getMedia().setImageByte(byteArray);
+                                i.setImageBitmap(resource);
+                            }
+                        });
             }
 
             @Override

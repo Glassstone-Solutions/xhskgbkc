@@ -3,10 +3,13 @@ package net.glassstones.thediarymagazine.ui.activities;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
@@ -16,6 +19,8 @@ import android.support.v7.graphics.Palette;
 import android.support.v7.widget.Toolbar;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
@@ -46,6 +51,8 @@ import retrofit.Retrofit;
 @DeepLink({"tdm://posts/{id}", "http://www.thediarymagazine.com/{slug}"})
 public class NewsDetailsActivity extends BaseActivity {
 
+    final int myWidth = UIUtils.getScreenWidth(this);
+    final int myHeight = 384;
     @InjectView(R.id.root)
     CoordinatorLayout mRoot;
     @InjectView(R.id.header)
@@ -58,11 +65,11 @@ public class NewsDetailsActivity extends BaseActivity {
     AppBarLayout appbar;
     @InjectView(R.id.web_view)
     NestedWebView webView;
-
     ServiceGenerator sg;
     TDMAPIClient client;
-
     Window window;
+
+    NI post;
 
     @Override
     public Class clazz() {
@@ -78,6 +85,10 @@ public class NewsDetailsActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Common app = (Common) getApplication();
+        assert getSupportActionBar() != null;
+        setSupportActionBar(mToolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         window = this.getWindow();
 
@@ -145,20 +156,58 @@ public class NewsDetailsActivity extends BaseActivity {
                     handleFailure(t);
                 }
             });
+        } else if (getIntent().getParcelableExtra("postBundle") != null) {
+            NI post = getIntent().getParcelableExtra("postBundle");
+            initPostFromBundle(post);
         } else {
             showToast("no deep link :( ");
         }
     }
 
-    private void handleFailure(Throwable t) {
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.details_menu, menu);
+        return true;
+    }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_share) {
+            if (post != null) {
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.putExtra(Intent.EXTRA_TEXT, post.getTitle().getTitle()+"\n\n"+post.getLink());
+                intent.setType("text/plain");
+                startActivity(Intent.createChooser(intent, "Share this via"));
+            }
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void initPostFromBundle(final NI p) {
+        post = p;
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        final Bitmap image = BitmapFactory.decodeByteArray(p.getMedia().getImageByte(), 0, p.getMedia().getImageByte().length, options);
+        Palette.from(image).generate(new Palette.PaletteAsyncListener() {
+            @Override
+            public void onGenerated(Palette palette) {
+                setupImage(palette, image);
+                setupWebView(webView, p);
+            }
+        });
     }
 
     @SuppressLint("SetJavaScriptEnabled")
     private void initPost(NI body) {
 
-        final int myWidth = UIUtils.getScreenWidth(this);
-        final int myHeight = 384;
+        post = body;
 
         Call<WPMedia> media = client.getMedia(body.getFeatured_media());
 
@@ -175,11 +224,7 @@ public class NewsDetailsActivity extends BaseActivity {
                                     Palette.from(resource).generate(new Palette.PaletteAsyncListener() {
                                         @Override
                                         public void onGenerated(Palette palette) {
-                                            int mutedColor = palette.getMutedColor(getResources().getColor(R.color.colorPrimary));
-                                            int statusBarColor = palette.getDarkMutedColor(getResources().getColor(R.color.colorPrimaryDark));
-                                            collapsingToolbar.setContentScrimColor(mutedColor);
-                                            changeStatusBar(statusBarColor);
-                                            header.setImageBitmap(resource);
+                                            setupImage(palette, resource);
                                         }
                                     });
                                 }
@@ -193,19 +238,51 @@ public class NewsDetailsActivity extends BaseActivity {
             }
         });
 
+        setupWebView(webView, body);
+    }
+
+    @SuppressLint("SetJavaScriptEnabled")
+    private void setupWebView(NestedWebView webView, NI post) {
         webView.addJavascriptInterface(new WebAppInterface(this), "Android");
+        webView.setScrollbarFadingEnabled(true);
         WebSettings settings = webView.getSettings();
         settings.setSupportZoom(false);
         settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         settings.setJavaScriptEnabled(true);
-        String sb = "<!DOCTYPE html><HTML lang=\"en\"><HEAD><link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css\" " +
+        String sb = getPostString(post);
+        webView.loadDataWithBaseURL("file:///android_asset/", sb, "text/html", "utf-8", null);
+    }
+
+    @NonNull
+    private String getPostString(NI post) {
+        return String.format("<!DOCTYPE html><HTML lang=\"en\">" +
+                "<HEAD>" +
+                "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css\"" +
                 "integrity=\"sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7\" crossorigin=\"anonymous\">" +
                 "<style type=\"text/css\">html{background-color:#fff}.pvc_stats{display:none}p:first-child{margin-top:16px;font-weight:700;font-size:18px}</style>" +
                 "</HEAD>" +
                 "<body class=\"container\">" +
-                body.getContent().getContent() +
-                "</body></HTML>";
-        webView.loadDataWithBaseURL("file:///android_asset/", sb, "text/html", "utf-8", null);
+                "%s" +
+                "<script type=\"text/javascript\" src=\"https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0/jquery.min.js\"></script>\n" +
+                "<script type=\"text/javascript\">\n" +
+                "$(\"img\").removeClass();\n" +
+                "$(\"img\").removeAttr(\"sizes\");\n" +
+                "$(\"img\").removeAttr(\"srcset\");\n" +
+                "$(\"img\").removeAttr(\"width\");\n" +
+                "$(\"img\").removeAttr(\"height\");\n" +
+                "$(\"img\").addClass(\"img-responsive\");\n" +
+                "</script></body></HTML>", post.getContent().getContent());
+    }
+
+    private void setupImage(Palette palette, Bitmap image) {
+        int mutedColor = palette.getMutedColor(getResources().getColor(R.color.colorPrimary));
+        collapsingToolbar.setContentScrimColor(mutedColor);
+        changeStatusBar(mutedColor);
+        header.setImageBitmap(image);
+    }
+
+    private void handleFailure(Throwable t) {
+
     }
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)

@@ -38,6 +38,15 @@ public class WPMedia implements Parcelable {
     private String media_type;
     private String mime_type;
     private String source_url;
+    private byte[] image_byte;
+
+    public byte[] getImageByte() {
+        return image_byte;
+    }
+
+    public void setImageByte(byte[] image_byte) {
+        this.image_byte = image_byte;
+    }
 
     public int getId() {
         return id;
@@ -71,6 +80,9 @@ public class WPMedia implements Parcelable {
         this.source_url = source_url;
     }
 
+    public WPMedia() {
+    }
+
     @Override
     public int describeContents() {
         return 0;
@@ -82,9 +94,7 @@ public class WPMedia implements Parcelable {
         dest.writeString(this.media_type);
         dest.writeString(this.mime_type);
         dest.writeString(this.source_url);
-    }
-
-    public WPMedia() {
+        dest.writeByteArray(this.image_byte);
     }
 
     protected WPMedia(Parcel in) {
@@ -92,9 +102,10 @@ public class WPMedia implements Parcelable {
         this.media_type = in.readString();
         this.mime_type = in.readString();
         this.source_url = in.readString();
+        this.image_byte = in.createByteArray();
     }
 
-    public static final Parcelable.Creator<WPMedia> CREATOR = new Parcelable.Creator<WPMedia>() {
+    public static final Creator<WPMedia> CREATOR = new Creator<WPMedia>() {
         @Override
         public WPMedia createFromParcel(Parcel source) {
             return new WPMedia(source);
