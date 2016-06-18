@@ -36,11 +36,16 @@ import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.interfaces.network.TDMAPIClient;
 import net.glassstones.thediarymagazine.models.NI;
+import net.glassstones.thediarymagazine.models.Post;
 import net.glassstones.thediarymagazine.models.WPMedia;
 import net.glassstones.thediarymagazine.network.ServiceGenerator;
 import net.glassstones.thediarymagazine.ui.widgets.NestedWebView;
 import net.glassstones.thediarymagazine.ui.widgets.TopAlignedImageView;
+import net.glassstones.thediarymagazine.utils.RealmUtils;
 import net.glassstones.thediarymagazine.utils.UIUtils;
+
+import java.io.ByteArrayOutputStream;
+import java.util.List;
 
 import butterknife.InjectView;
 import retrofit.Call;
@@ -49,7 +54,7 @@ import retrofit.Response;
 import retrofit.Retrofit;
 
 @DeepLink({"tdm://posts/{id}", "http://www.thediarymagazine.com/{slug}"})
-public class NewsDetailsActivity extends BaseActivity {
+public class NewsDetailsActivity extends BaseActivity implements RealmUtils.RealmInterface {
 
     final int myWidth = UIUtils.getScreenWidth(this);
     final int myHeight = 384;
@@ -69,7 +74,9 @@ public class NewsDetailsActivity extends BaseActivity {
     TDMAPIClient client;
     Window window;
 
-    NI post;
+    Post post;
+
+    RealmUtils realmUtils;
 
     @Override
     public Class clazz() {
@@ -92,6 +99,8 @@ public class NewsDetailsActivity extends BaseActivity {
 
         window = this.getWindow();
 
+        realmUtils = new RealmUtils(Common.getRealm(), this);
+
         sg = new ServiceGenerator(app);
 
         client = sg.createService(TDMAPIClient.class);
@@ -108,7 +117,8 @@ public class NewsDetailsActivity extends BaseActivity {
                     @Override
                     public void onResponse(Response<NI> response, Retrofit retrofit) {
                         if (response.isSuccess()) {
-                            initPost(response.body());
+                            NI post = response.body();
+                            initPost(realmUtils.NI2Post(post, null));
                         } else {
                             NavUtils.navigateUpFromSameTask(NewsDetailsActivity.this);
                         }
@@ -126,7 +136,8 @@ public class NewsDetailsActivity extends BaseActivity {
                     @Override
                     public void onResponse(Response<NI> response, Retrofit retrofit) {
                         if (response.isSuccess()) {
-                            initPost(response.body());
+                            NI post = response.body();
+                            initPost(realmUtils.NI2Post(post, null));
                         } else {
                             NavUtils.navigateUpFromSameTask(NewsDetailsActivity.this);
                         }
@@ -140,28 +151,18 @@ public class NewsDetailsActivity extends BaseActivity {
                 showToast("name==" + name);
             }
         } else if (getIntent().getIntExtra("post_id", -1) != -1) {
-            Call<NI> getPost = client.getPost(getIntent().getIntExtra("post_id", -1));
-            getPost.enqueue(new Callback<NI>() {
-                @Override
-                public void onResponse(Response<NI> response, Retrofit retrofit) {
-                    if (response.isSuccess()) {
-                        initPost(response.body());
-                    } else {
-                        NavUtils.navigateUpFromSameTask(NewsDetailsActivity.this);
-                    }
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    handleFailure(t);
-                }
-            });
-        } else if (getIntent().getParcelableExtra("postBundle") != null) {
-            NI post = getIntent().getParcelableExtra("postBundle");
-            initPostFromBundle(post);
+            post = realmUtils.getPost("id", getIntent().getIntExtra("post_id", -1));
+            initPost(post);
         } else {
             showToast("no deep link :( ");
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        realmUtils.closeRealm();
+        realmUtils = null;
     }
 
     @Override
@@ -182,7 +183,7 @@ public class NewsDetailsActivity extends BaseActivity {
         if (id == R.id.action_share) {
             if (post != null) {
                 Intent intent = new Intent(Intent.ACTION_SEND);
-                intent.putExtra(Intent.EXTRA_TEXT, post.getTitle().getTitle()+"\n\n"+post.getLink());
+                intent.putExtra(Intent.EXTRA_TEXT, post.getTitle() + "\n\n" + post.getLink());
                 intent.setType("text/plain");
                 startActivity(Intent.createChooser(intent, "Share this via"));
             }
@@ -191,58 +192,60 @@ public class NewsDetailsActivity extends BaseActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void initPostFromBundle(final NI p) {
-        post = p;
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        final Bitmap image = BitmapFactory.decodeByteArray(p.getMedia().getImageByte(), 0, p.getMedia().getImageByte().length, options);
-        Palette.from(image).generate(new Palette.PaletteAsyncListener() {
-            @Override
-            public void onGenerated(Palette palette) {
-                setupImage(palette, image);
-                setupWebView(webView, p);
-            }
-        });
-    }
-
     @SuppressLint("SetJavaScriptEnabled")
-    private void initPost(NI body) {
+    private void initPost(Post body) {
 
         post = body;
 
-        Call<WPMedia> media = client.getMedia(body.getFeatured_media());
+        if (!post.isMediaSaved()) {
+            Call<WPMedia> media = client.getMedia(body.getFeatured_media());
 
-        media.enqueue(new Callback<WPMedia>() {
-            @Override
-            public void onResponse(Response<WPMedia> response, Retrofit retrofit) {
-                if (response.isSuccess()) {
-                    Glide.with(getApplicationContext())
-                            .load(Uri.parse(response.body().getSource_url()))
-                            .asBitmap()
-                            .into(new SimpleTarget<Bitmap>(myWidth, myHeight) {
-                                @Override
-                                public void onResourceReady(final Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
-                                    Palette.from(resource).generate(new Palette.PaletteAsyncListener() {
-                                        @Override
-                                        public void onGenerated(Palette palette) {
-                                            setupImage(palette, resource);
-                                        }
-                                    });
-                                }
-                            });
+            media.enqueue(new Callback<WPMedia>() {
+                @Override
+                public void onResponse(Response<WPMedia> response, Retrofit retrofit) {
+                    if (response.isSuccess()) {
+                        Glide.with(getApplicationContext())
+                                .load(Uri.parse(response.body().getSourceUrl()))
+                                .asBitmap()
+                                .into(new SimpleTarget<Bitmap>(myWidth, myHeight) {
+                                    @Override
+                                    public void onResourceReady(final Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                                        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                                        resource.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+                                        byte[] byteArray = stream.toByteArray();
+                                        realmUtils.updatePostMedia(post, byteArray);
+                                        Palette.from(resource).generate(new Palette.PaletteAsyncListener() {
+                                            @Override
+                                            public void onGenerated(Palette palette) {
+                                                setupImage(palette, resource);
+                                            }
+                                        });
+                                    }
+                                });
+                    }
                 }
-            }
 
-            @Override
-            public void onFailure(Throwable t) {
+                @Override
+                public void onFailure(Throwable t) {
 
-            }
-        });
+                }
+            });
+        } else {
+            final Bitmap image = BitmapFactory.decodeByteArray(post.getImageByte(), 0, post.getImageByte().length);
+
+            Palette.from(image).generate(new Palette.PaletteAsyncListener() {
+                @Override
+                public void onGenerated(Palette palette) {
+                    setupImage(palette, image);
+                }
+            });
+        }
 
         setupWebView(webView, body);
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    private void setupWebView(NestedWebView webView, NI post) {
+    private void setupWebView(NestedWebView webView, Post post) {
         webView.addJavascriptInterface(new WebAppInterface(this), "Android");
         webView.setScrollbarFadingEnabled(true);
         WebSettings settings = webView.getSettings();
@@ -254,7 +257,7 @@ public class NewsDetailsActivity extends BaseActivity {
     }
 
     @NonNull
-    private String getPostString(NI post) {
+    private String getPostString(Post post) {
         return String.format("<!DOCTYPE html><HTML lang=\"en\">" +
                 "<HEAD>" +
                 "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css\"" +
@@ -271,7 +274,7 @@ public class NewsDetailsActivity extends BaseActivity {
                 "$(\"img\").removeAttr(\"width\");\n" +
                 "$(\"img\").removeAttr(\"height\");\n" +
                 "$(\"img\").addClass(\"img-responsive\");\n" +
-                "</script></body></HTML>", post.getContent().getContent());
+                "</script></body></HTML>", post.getContent());
     }
 
     private void setupImage(Palette palette, Bitmap image) {
@@ -294,6 +297,21 @@ public class NewsDetailsActivity extends BaseActivity {
 
     private void showToast(String s) {
         Snackbar.make(mRoot, s, Snackbar.LENGTH_LONG).show();
+    }
+
+    @Override
+    public void realmChange(List<Post> posts) {
+
+    }
+
+    @Override
+    public void realmChange(Post post) {
+
+    }
+
+    @Override
+    public void postSaveFailed(Post post, Throwable t) {
+
     }
 
     private class WebAppInterface {

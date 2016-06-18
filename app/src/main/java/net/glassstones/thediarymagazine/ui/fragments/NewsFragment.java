@@ -3,6 +3,7 @@ package net.glassstones.thediarymagazine.ui.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,23 +11,27 @@ import android.view.ViewGroup;
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.interfaces.Callback;
-import net.glassstones.thediarymagazine.models.NI;
 import net.glassstones.thediarymagazine.models.NewsItem;
+import net.glassstones.thediarymagazine.models.Post;
+import net.glassstones.thediarymagazine.models.PostEvent;
 import net.glassstones.thediarymagazine.ui.activities.NewsDetailsActivity;
 import net.glassstones.thediarymagazine.ui.adapters.NewsFlipAdapter;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.util.ArrayList;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import retrofit.Response;
 import se.emilsjolander.flipview.FlipView;
 import se.emilsjolander.flipview.OverFlipMode;
 
 /**
  * A simple {@link BaseNewsFragment} subclass.
  */
-public class NewsFragment extends BaseNewsFragment implements Callback, FlipView.OnFlipListener, FlipView.OnOverFlipListener {
+public class NewsFragment extends BaseNewsFragment implements Callback,
+        FlipView.OnFlipListener, FlipView.OnOverFlipListener {
 
 
     @InjectView(R.id.list)
@@ -38,6 +43,22 @@ public class NewsFragment extends BaseNewsFragment implements Callback, FlipView
         // Required empty public constructor
     }
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        EventBus.getDefault().unregister(this);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -52,6 +73,11 @@ public class NewsFragment extends BaseNewsFragment implements Callback, FlipView
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        if (Common.getRealm().where(Post.class).count() > 0){
+            clusters = Common.getNewsCluster();
+        } else {
+            clusters = new ArrayList<>();
+        }
         mAdapter = new NewsFlipAdapter(getActivity(), clusters);
         mAdapter.setCallback(this);
         list.setAdapter(mAdapter);
@@ -74,10 +100,7 @@ public class NewsFragment extends BaseNewsFragment implements Callback, FlipView
     @Override
     public void onPageRequested(NewsItem newsItem) {
         Intent i = new Intent(getActivity(), NewsDetailsActivity.class);
-//        i.putExtra("post_id", newsItem.getPost().getId());
-        if (newsItem.getPost().getMedia() != null && newsItem.getPost().getMedia().getImageByte() != null) {
-            i.putExtra("postBundle", newsItem.getPost());
-        }
+        i.putExtra("post_id", newsItem.getPost().getId());
         getActivity().startActivity(i);
     }
 
@@ -92,37 +115,15 @@ public class NewsFragment extends BaseNewsFragment implements Callback, FlipView
     }
 
     @Override
-    public int limit() {
-        return 25;
-    }
-
-    @Override
-    public int skip() {
-        return 1;
-    }
-
-    @Override
     public Class clazz() {
         return this.getClass();
     }
 
-    @Override
-    public String slug() {
-        return null;
+    // TODO: Use EventBus to receive Realm change info
+
+    @Subscribe
+    public void onPostEvent(PostEvent event) {
+        mAdapter.update(Common.getNewsCluster());
     }
 
-
-    @Override
-    public void onPostResponse(Response<ArrayList<NI>> response) {
-        super.onPostResponse(response);
-
-        clusters = Common.getNewsCluster(response.body());
-
-        mAdapter.update(clusters);
-    }
-
-    @Override
-    public void onPostRequestFailure(Throwable t) {
-
-    }
 }

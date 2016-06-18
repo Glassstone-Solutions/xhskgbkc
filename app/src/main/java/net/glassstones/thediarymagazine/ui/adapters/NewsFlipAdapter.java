@@ -2,6 +2,7 @@ package net.glassstones.thediarymagazine.ui.adapters;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.text.Html;
 import android.util.Log;
 import android.util.TypedValue;
@@ -205,9 +206,9 @@ public class NewsFlipAdapter extends BaseAdapter {
             ImageView splash = vh.getmSplash();
             setImage(item, splash);
             TextView t = vh.getmTitle();
-            t.setText(Html.fromHtml(item.getPost().getTitle().getTitle()));
+            t.setText(Html.fromHtml(item.getPost().getTitle()));
             CustomTextView ct = vh.getExcerpt();
-            ct.setText(Html.fromHtml(item.getPost().getExcerpt().getExcerpt()));
+            ct.setText(Html.fromHtml(item.getPost().getExcerpt()));
 
             vh.getRoot().setTag(item);
             vh.getRoot().setOnClickListener(listener);
@@ -228,14 +229,14 @@ public class NewsFlipAdapter extends BaseAdapter {
                     t1 = vh.getTitle1();
                     i1 = vh.getSplash1();
 
-                    t1.setText(Html.fromHtml(ni.getPost().getTitle().getTitle()));
+                    t1.setText(Html.fromHtml(ni.getPost().getTitle()));
                     setImage(ni, i1);
 
                     setTextSize(t1, 18);
 
                     CustomTextView ct = vh.getExcerpts().get(0);
 
-                    ct.setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
+                    ct.setText(Html.fromHtml(ni.getPost().getExcerpt()));
 
                     root = vh.getRoot().get(0);
 
@@ -247,14 +248,14 @@ public class NewsFlipAdapter extends BaseAdapter {
                     t2 = vh.getTitle2();
                     i2 = vh.getSplash2();
 
-                    t2.setText(Html.fromHtml(ni.getPost().getTitle().getTitle()));
+                    t2.setText(Html.fromHtml(ni.getPost().getTitle()));
                     setImage(ni, i2);
 
                     setTextSize(t2, 18);
 
                     CustomTextView ct = vh.getExcerpts().get(1);
 
-                    ct.setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
+                    ct.setText(Html.fromHtml(ni.getPost().getExcerpt()));
 
                     root = vh.getRoot().get(1);
 
@@ -280,14 +281,14 @@ public class NewsFlipAdapter extends BaseAdapter {
                     t1 = vh.getTitle1();
                     i1 = vh.getSplash1();
 
-                    t1.setText(Html.fromHtml(ni.getPost().getTitle().getTitle()));
+                    t1.setText(Html.fromHtml(ni.getPost().getTitle()));
                     setImage(ni, i1);
 
                     setTextSize(t1, 18);
 
                     CustomTextView ct = vh.getExcerpts().get(0);
 
-                    ct.setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
+                    ct.setText(Html.fromHtml(ni.getPost().getExcerpt()));
 
                     RelativeLayout root = vh.getRoot1();
 
@@ -299,14 +300,14 @@ public class NewsFlipAdapter extends BaseAdapter {
                     t2 = vh.getTitle2();
                     i2 = vh.getSplash2();
 
-                    t2.setText(Html.fromHtml(ni.getPost().getTitle().getTitle()));
+                    t2.setText(Html.fromHtml(ni.getPost().getTitle()));
                     setImage(ni, i2);
 
                     setTextSize(t2, 14);
 
                     CustomTextView ct = vh.getExcerpts().get(1);
 
-                    ct.setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
+                    ct.setText(Html.fromHtml(ni.getPost().getExcerpt()));
 
                     LinearLayout root = vh.getRootBottom().get(0);
 
@@ -317,14 +318,14 @@ public class NewsFlipAdapter extends BaseAdapter {
                     t3 = vh.getTitle3();
                     i3 = vh.getSplash3();
 
-                    t3.setText(Html.fromHtml(ni.getPost().getTitle().getTitle()));
+                    t3.setText(Html.fromHtml(ni.getPost().getTitle()));
                     setImage(ni, i3);
 
                     setTextSize(t3, 14);
 
                     CustomTextView ct = vh.getExcerpts().get(2);
 
-                    ct.setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
+                    ct.setText(Html.fromHtml(ni.getPost().getExcerpt()));
 
                     LinearLayout root = vh.getRootBottom().get(1);
 
@@ -347,15 +348,15 @@ public class NewsFlipAdapter extends BaseAdapter {
 
             TextView t = vh.getTitle();
 
-            t.setText(Html.fromHtml(ni.getPost().getTitle().getTitle()));
+            t.setText(Html.fromHtml(ni.getPost().getTitle()));
 
-            if (ni.getPost().getTitle().getTitle().length() > 55) {
+            if (ni.getPost().getTitle().length() > 55) {
                 setTextSize(vh.getTitle(), 18);
             }
 
             CustomTextView ct = vh.getBody();
 
-            ct.setText(Html.fromHtml(ni.getPost().getExcerpt().getExcerpt()));
+            ct.setText(Html.fromHtml(ni.getPost().getExcerpt()));
 
             LinearLayout root = vh.getmRoot();
 
@@ -370,33 +371,44 @@ public class NewsFlipAdapter extends BaseAdapter {
     }
 
     private void setImage(final NewsItem ni, final ImageView i) {
-        Call<WPMedia> mediaCall = client.getMedia(ni.getPost().getFeatured_media());
+        if (!ni.getPost().isMediaSaved()) {
+            Call<WPMedia> mediaCall = client.getMedia(ni.getPost().getFeatured_media());
 
-        mediaCall.enqueue(new retrofit.Callback<WPMedia>() {
-            @Override
-            public void onResponse(Response<WPMedia> response, Retrofit retrofit) {
-                String url = response.body().getSource_url();
-                ni.getPost().setMedia(response.body());
-                Glide.with(context)
-                        .load(url != null ? url : "")
-                        .asBitmap()
-                        .into(new SimpleTarget<Bitmap>() {
-                            @Override
-                            public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
-                                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                                resource.compress(Bitmap.CompressFormat.JPEG,100, stream);
-                                byte[] byteArray = stream.toByteArray();
-                                ni.getPost().getMedia().setImageByte(byteArray);
-                                i.setImageBitmap(resource);
-                            }
-                        });
-            }
+            mediaCall.enqueue(new retrofit.Callback<WPMedia>() {
+                @Override
+                public void onResponse(final Response<WPMedia> response, Retrofit retrofit) {
+                    String url = response.body().getSourceUrl();
+                    Glide.with(context)
+                            .load(url != null ? url : "")
+                            .asBitmap()
+                            .into(new SimpleTarget<Bitmap>() {
+                                @Override
+                                public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                                    resource.compress(Bitmap.CompressFormat.JPEG,100, stream);
+                                    byte[] byteArray = stream.toByteArray();
+                                    Common.getRealm().beginTransaction();
+                                    ni.getPost().setImageByte(byteArray);
+                                    ni.getPost().setMediaSaved(true);
+                                    ni.getPost().setMediaId(response.body().getId());
+                                    ni.getPost().setMedia_type(response.body().getMedia_type());
+                                    ni.getPost().setMime_type(response.body().getMime_type());
+                                    ni.getPost().setSource_url(response.body().getSourceUrl());
+                                    Common.getRealm().commitTransaction();
+                                    i.setImageBitmap(resource);
+                                }
+                            });
+                }
 
-            @Override
-            public void onFailure(Throwable t) {
+                @Override
+                public void onFailure(Throwable t) {
 
-            }
-        });
+                }
+            });
+        } else {
+            Bitmap b = BitmapFactory.decodeByteArray(ni.getPost().getImageByte(), 0, ni.getPost().getImageByte().length);
+            i.setImageBitmap(b);
+        }
     }
 
     private void setTextSize(TextView t, int size) {

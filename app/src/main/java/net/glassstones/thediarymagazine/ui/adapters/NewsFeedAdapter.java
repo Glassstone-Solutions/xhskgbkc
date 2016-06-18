@@ -112,9 +112,9 @@ public class NewsFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
 
             setImage(ni, i);
 
-            vh.getTitle().setText(ni.getPost().getTitle().getTitle());
+            vh.getTitle().setText(ni.getPost().getTitle());
 
-            if (ni.getPost().getTitle().getTitle().length() > 55) {
+            if (ni.getPost().getTitle().length() > 55) {
                 setTextSize(vh.getTitle(), 18);
             }
 
@@ -131,8 +131,8 @@ public class NewsFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                 NewsItem ni = items.get(position).getItems().get(0);
                 setImage(ni, img);
 
-                t.setText(ni.getPost().getTitle().getTitle());
-                if (ni.getPost().getTitle().getTitle().length() > 55) {
+                t.setText(ni.getPost().getTitle());
+                if (ni.getPost().getTitle().length() > 55) {
                     setTextSize(t, 18);
                 }
             }
@@ -151,7 +151,7 @@ public class NewsFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     t1 = vh.getTitle1();
                     i1 = vh.getSplash1();
 
-                    t1.setText(ni.getPost().getTitle().getTitle());
+                    t1.setText(ni.getPost().getTitle());
                     setImage(ni, i1);
 
                     setTextSize(t1, 18);
@@ -160,7 +160,7 @@ public class NewsFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     t2 = vh.getTitle2();
                     i2 = vh.getSplash2();
 
-                    t2.setText(ni.getPost().getTitle().getTitle());
+                    t2.setText(ni.getPost().getTitle());
                     setImage(ni, i2);
 
                     setTextSize(t2, 18);
@@ -179,7 +179,7 @@ public class NewsFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     t1 = vh.getTitle1();
                     i1 = vh.getSplash1();
 
-                    t1.setText(ni.getPost().getTitle().getTitle());
+                    t1.setText(ni.getPost().getTitle());
                     setImage(ni, i1);
 
                     setTextSize(t1, 18);
@@ -188,7 +188,7 @@ public class NewsFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     t2 = vh.getTitle2();
                     i2 = vh.getSplash2();
 
-                    t2.setText(ni.getPost().getTitle().getTitle());
+                    t2.setText(ni.getPost().getTitle());
                     setImage(ni, i2);
 
                     setTextSize(t2, 14);
@@ -197,7 +197,7 @@ public class NewsFeedAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
                     t3 = vh.getTitle3();
                     i3 = vh.getSplash3();
 
-                    t3.setText(ni.getPost().getTitle().getTitle());
+                    t3.setText(ni.getPost().getTitle());
                     setImage(ni, i3);
 
                     setTextSize(t3, 14);

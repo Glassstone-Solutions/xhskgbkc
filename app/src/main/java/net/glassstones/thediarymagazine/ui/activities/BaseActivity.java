@@ -18,11 +18,12 @@ import butterknife.ButterKnife;
 public abstract class BaseActivity extends AppCompatActivity {
 
 
-
-    public abstract Class clazz();
-    public abstract int resourceId();
     protected String TAG = clazz().getSimpleName();
     protected Tracker mTracker;
+
+    public abstract Class clazz();
+
+    public abstract int resourceId();
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {

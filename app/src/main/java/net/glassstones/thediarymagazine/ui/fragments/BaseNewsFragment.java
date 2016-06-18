@@ -31,7 +31,7 @@ import retrofit.Retrofit;
  * Created by Thompson on 08/06/2016.
  * For The Diary Magazine
  */
-public abstract class BaseNewsFragment extends Fragment implements NetworkOperations {
+public abstract class BaseNewsFragment extends Fragment {
     @Inject
     SharedPreferences mSharedPreferences;
 
@@ -41,16 +41,9 @@ public abstract class BaseNewsFragment extends Fragment implements NetworkOperat
     @Inject
     TDMAPIClient client;
     String TAG = clazz().getSimpleName();
-    protected List<NI> posts;
     List<NewsCluster> clusters;
 
-    public abstract int limit();
-
-    public abstract int skip();
-
     public abstract Class clazz();
-
-    public abstract String slug();
 
     Tracker mTracker;
 
@@ -70,28 +63,5 @@ public abstract class BaseNewsFragment extends Fragment implements NetworkOperat
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        clusters = new ArrayList<>();
-
-        ServiceGenerator sg = new ServiceGenerator(app);
-
-        TDMAPIClient client = sg.createService(TDMAPIClient.class);
-
-        Call<ArrayList<NI>> call = client.getPosts(limit(), skip(), slug());
-
-        Request request = new Request(call);
-
-        request.setCallback(this);
-
-        request.execute();
-    }
-
-    @Override
-    public void onPostResponse(Response<ArrayList<NI>> response) {
-        posts = response.body();
-    }
-
-    @Override
-    public void onPostRequestFailure(Throwable t) {
-
     }
 }

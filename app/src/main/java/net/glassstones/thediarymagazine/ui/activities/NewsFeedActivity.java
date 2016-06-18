@@ -4,32 +4,45 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
+import com.avocarrot.androidsdk.AdError;
+import com.avocarrot.androidsdk.AvocarrotCustomListener;
+import com.avocarrot.androidsdk.CustomModel;
 import com.parse.ParseUser;
 
+import net.glassstones.thediarymagazine.BuildConfig;
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
+import net.glassstones.thediarymagazine.interfaces.network.NetworkOperations;
+import net.glassstones.thediarymagazine.interfaces.network.TDMAPIClient;
+import net.glassstones.thediarymagazine.models.NI;
+import net.glassstones.thediarymagazine.models.Post;
+import net.glassstones.thediarymagazine.models.PostEvent;
+import net.glassstones.thediarymagazine.network.Request;
+import net.glassstones.thediarymagazine.network.ServiceGenerator;
+import net.glassstones.thediarymagazine.ui.adapters.MyFragmentAdapter;
 import net.glassstones.thediarymagazine.ui.fragments.DashboardFragment;
 import net.glassstones.thediarymagazine.ui.fragments.NewsFragment;
 import net.glassstones.thediarymagazine.ui.fragments.UnderConstructionFragment;
 import net.glassstones.thediarymagazine.utils.HelperSharedPreferences;
+import net.glassstones.thediarymagazine.utils.RealmUtils;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.ButterKnife;
 import butterknife.InjectView;
+import retrofit.Call;
+import retrofit.Response;
 
 
-public class NewsFeedActivity extends BaseActivity {
+public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmInterface, NetworkOperations {
 
     @InjectView(R.id.menu_tab)
     TabLayout mTabLayout;
@@ -37,6 +50,8 @@ public class NewsFeedActivity extends BaseActivity {
     ViewPager mPager;
 
     ParseUser mCurrentUser;
+
+    RealmUtils realmUtils;
 
     private int[] tabIcons = {
             R.drawable.ic_home,
@@ -65,6 +80,59 @@ public class NewsFeedActivity extends BaseActivity {
         else
             init();
         mCurrentUser = ParseUser.getCurrentUser();
+
+        final com.avocarrot.androidsdk.AvocarrotCustom avocarrotCustom =
+                new com.avocarrot.androidsdk.AvocarrotCustom(
+                        this,                     /* reference to your Activity */
+                        "87d7278ea00dbfe6a1e8afed92ceadc9df3aba91", /* this is your Avocarrot API Key */
+                        "41b30d19c03fa5eb8884d558500598f8a58c69e9" /* this is your Avocarrot Placement Key */
+                );
+
+        if (BuildConfig.DEBUG) {
+            avocarrotCustom.setSandbox(true);
+            avocarrotCustom.setLogger(true, "ALL");
+        }
+
+        avocarrotCustom.setListener(new AvocarrotCustomListener() {
+            @Override
+            public void onAdLoaded(List<CustomModel> ads) {
+                super.onAdLoaded(ads);
+                super.onAdLoaded(ads);
+                if ((ads == null) || (ads.size() < 1)) {
+                    return;
+                }
+            }
+
+            @Override
+            public void onAdError(AdError error) {
+                super.onAdError(error);
+            }
+
+            @Override
+            public void onAdClicked() {
+                super.onAdClicked();
+            }
+
+            @Override
+            public void onAdImpression() {
+                super.onAdImpression();
+            }
+        });
+
+        ServiceGenerator sg = new ServiceGenerator((Common) getApplication());
+
+        TDMAPIClient client = sg.createService(TDMAPIClient.class);
+
+        Call<ArrayList<NI>> call = client.getPosts(25, 0, null);
+
+        Request request = new Request(call);
+
+        request.setCallback(this);
+
+        request.execute();
+
+        realmUtils = new RealmUtils(Common.getRealm(), this);
+
     }
 
     private void doSplash() {
@@ -165,33 +233,41 @@ public class NewsFeedActivity extends BaseActivity {
         return R.layout.activity_news_feed;
     }
 
-    private class MyFragmentAdapter extends FragmentPagerAdapter {
-        private final List<Fragment> mFragmentList = new ArrayList<>();
+    @Override
+    public void realmChange(List<Post> posts) {
+        EventBus.getDefault().post(new PostEvent()
+                .id(PostEvent.LIST_CHANGE)
+                .status(PostEvent.SAVED)
+                .type(PostEvent.POST_LIST)
+        );
+    }
 
-        public MyFragmentAdapter(FragmentManager fm) {
-            super(fm);
+    @Override
+    public void realmChange(Post post) {
+        EventBus.getDefault().post(new PostEvent()
+                .id(post.getId())
+                .type(PostEvent.SINGLE_POST)
+                .status(PostEvent.SAVED)
+        );
+    }
+
+    @Override
+    public void postSaveFailed(Post post, Throwable t) {
+
+    }
+
+    @Override
+    public void onPostResponse(Response<ArrayList<NI>> respose) {
+        List<NI> posts = respose.body();
+        List<Post> rPosts = new ArrayList<>();
+        for (NI p : posts){
+            rPosts.add(realmUtils.NI2Post(p, null));
         }
+        realmUtils.savePosts(rPosts);
+    }
 
-        @Override
-        public Fragment getItem(int position) {
-            return mFragmentList.get(position);
-        }
-
-        @Override
-        public int getCount() {
-            return mFragmentList.size();
-        }
-
-        public void addFrag(Fragment fragment) {
-            mFragmentList.add(fragment);
-        }
-
-        @Override
-        public CharSequence getPageTitle(int position) {
-
-            // return null to display only the icon
-            return null;
-        }
+    @Override
+    public void onPostRequestFailure(Throwable t) {
 
     }
 }

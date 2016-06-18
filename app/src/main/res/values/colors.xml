@@ -10,4 +10,5 @@
     <color name="colorSource">#020e65</color>
     <color name="colorBtnPressed">#188FFF</color>
     <color name="secondaryColorDark">#e0e0e0</color>
+    <color name="avoLightGray">#efefef</color>
 </resources>

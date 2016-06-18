@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.support.v4.content.LocalBroadcastManager;
+import android.util.Log;
 import android.view.View;
 
 import com.airbnb.deeplinkdispatch.DeepLinkHandler;
@@ -26,11 +27,14 @@ import net.glassstones.thediarymagazine.di.modules.TdmModule;
 import net.glassstones.thediarymagazine.models.NI;
 import net.glassstones.thediarymagazine.models.NewsCluster;
 import net.glassstones.thediarymagazine.models.NewsItem;
+import net.glassstones.thediarymagazine.models.Post;
 import net.glassstones.thediarymagazine.receivers.DeepLinkReceiver;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
 import retrofit.Retrofit;
 
 /**
@@ -46,6 +50,7 @@ public class Common extends Application {
     private static Retrofit retrofit;
     private NetComponent mNetComponent;
     private Tracker mTracker;
+    private static Realm realm;
 
     public static void loadingStatus(AVLoadingIndicatorView loadingView, boolean isLoading) {
         loadingView.setVisibility(isLoading ? View.VISIBLE : View.INVISIBLE);
@@ -55,7 +60,7 @@ public class Common extends Application {
         return retrofit;
     }
 
-    private static List<NewsItem> getDemoNews(ArrayList<NI> posts) {
+    private static List<NewsItem> getDemoNews(List<Post> posts) {
         List<NewsItem> list = new ArrayList<>();
         for (int i = 0; i < posts.size(); i++) {
             NewsItem item = new NewsItem();
@@ -101,8 +106,10 @@ public class Common extends Application {
         return cluster;
     }
 
-    public static List<NewsCluster> getNewsCluster(ArrayList<NI> posts) {
-        final List<NewsItem> items = getDemoNews(posts);
+    public static List<NewsCluster> getNewsCluster() {
+        List<Post> p = realm.where(Post.class).findAll();
+        Log.e("COUNT", String.valueOf(p.size()));
+        final List<NewsItem> items = getDemoNews(p);
 
         return getNewsCluster(items);
     }
@@ -121,6 +128,7 @@ public class Common extends Application {
             GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
             // To enable debug logging use: adb shell setprop log.tag.GAv4 DEBUG
             mTracker = analytics.newTracker(R.xml.global_tracker);
+            mTracker.enableAdvertisingIdCollection(true);
         }
         return mTracker;
     }
@@ -160,6 +168,17 @@ public class Common extends Application {
         IntentFilter intentFilter = new IntentFilter(DeepLinkHandler.ACTION);
         LocalBroadcastManager.getInstance(this).registerReceiver(new DeepLinkReceiver(), intentFilter);
         LeakCanary.install(this);
+
+        RealmConfiguration config = new RealmConfiguration.Builder(this)
+                .deleteRealmIfMigrationNeeded()
+                .build();
+
+        realm = Realm.getInstance(config);
+
+    }
+
+    public static Realm getRealm(){
+        return realm;
     }
 
     public NetComponent getNetComponent() {
