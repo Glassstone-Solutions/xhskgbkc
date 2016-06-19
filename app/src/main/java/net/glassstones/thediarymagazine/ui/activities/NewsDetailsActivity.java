@@ -17,6 +17,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.NavUtils;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
@@ -214,7 +215,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
 
         post = body;
 
-        title.setText(post.getTitle());
+        title.setText(Html.fromHtml(post.getTitle()));
 
         try {
             String date = UIUtils.getTimeAgo(post.getCreated_at());
