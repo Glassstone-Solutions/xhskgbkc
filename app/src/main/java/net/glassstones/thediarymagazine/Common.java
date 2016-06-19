@@ -24,7 +24,6 @@ import net.glassstones.thediarymagazine.di.components.TdmComponent;
 import net.glassstones.thediarymagazine.di.modules.AppModule;
 import net.glassstones.thediarymagazine.di.modules.NetModule;
 import net.glassstones.thediarymagazine.di.modules.TdmModule;
-import net.glassstones.thediarymagazine.models.NI;
 import net.glassstones.thediarymagazine.models.NewsCluster;
 import net.glassstones.thediarymagazine.models.NewsItem;
 import net.glassstones.thediarymagazine.models.Post;
@@ -48,9 +47,9 @@ public class Common extends Application {
     public static volatile Context applicationContext;
     private static TdmComponent mTDMComponent;
     private static Retrofit retrofit;
+    private static Realm realm;
     private NetComponent mNetComponent;
     private Tracker mTracker;
-    private static Realm realm;
 
     public static void loadingStatus(AVLoadingIndicatorView loadingView, boolean isLoading) {
         loadingView.setVisibility(isLoading ? View.VISIBLE : View.INVISIBLE);
@@ -106,7 +105,7 @@ public class Common extends Application {
         return cluster;
     }
 
-    public static List<NewsCluster> getNewsCluster() {
+    public static List<NewsCluster> getNewsCluster(Realm realm) {
         List<Post> p = realm.where(Post.class).findAll();
         Log.e("COUNT", String.valueOf(p.size()));
         final List<NewsItem> items = getDemoNews(p);
@@ -173,12 +172,8 @@ public class Common extends Application {
                 .deleteRealmIfMigrationNeeded()
                 .build();
 
-        realm = Realm.getInstance(config);
+        Realm.setDefaultConfiguration(config);
 
-    }
-
-    public static Realm getRealm(){
-        return realm;
     }
 
     public NetComponent getNetComponent() {

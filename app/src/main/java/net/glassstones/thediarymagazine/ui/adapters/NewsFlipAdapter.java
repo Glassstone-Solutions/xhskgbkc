@@ -384,17 +384,6 @@ public class NewsFlipAdapter extends BaseAdapter {
                             .into(new SimpleTarget<Bitmap>() {
                                 @Override
                                 public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
-                                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                                    resource.compress(Bitmap.CompressFormat.JPEG,100, stream);
-                                    byte[] byteArray = stream.toByteArray();
-                                    Common.getRealm().beginTransaction();
-                                    ni.getPost().setImageByte(byteArray);
-                                    ni.getPost().setMediaSaved(true);
-                                    ni.getPost().setMediaId(response.body().getId());
-                                    ni.getPost().setMedia_type(response.body().getMedia_type());
-                                    ni.getPost().setMime_type(response.body().getMime_type());
-                                    ni.getPost().setSource_url(response.body().getSourceUrl());
-                                    Common.getRealm().commitTransaction();
                                     i.setImageBitmap(resource);
                                 }
                             });

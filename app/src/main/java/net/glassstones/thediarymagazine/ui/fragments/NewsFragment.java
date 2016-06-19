@@ -24,6 +24,7 @@ import java.util.ArrayList;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import io.realm.Realm;
 import se.emilsjolander.flipview.FlipView;
 import se.emilsjolander.flipview.OverFlipMode;
 
@@ -39,6 +40,8 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
 
     NewsFlipAdapter mAdapter;
 
+    Realm realm;
+
     public NewsFragment() {
         // Required empty public constructor
     }
@@ -46,6 +49,7 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        realm = Realm.getDefaultInstance();
     }
 
     @Override
@@ -73,8 +77,8 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        if (Common.getRealm().where(Post.class).count() > 0){
-            clusters = Common.getNewsCluster();
+        if (realm.where(Post.class).count() > 0){
+            clusters = Common.getNewsCluster(realm);
         } else {
             clusters = new ArrayList<>();
         }
@@ -123,7 +127,7 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
 
     @Subscribe
     public void onPostEvent(PostEvent event) {
-        mAdapter.update(Common.getNewsCluster());
+        mAdapter.update(Common.getNewsCluster(realm));
     }
 
 }

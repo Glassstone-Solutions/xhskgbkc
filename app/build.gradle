@@ -95,6 +95,8 @@ dependencies {
     compile 'com.airbnb:deeplinkdispatch:2.0.1'
     apt 'com.airbnb:deeplinkdispatch-processor:2.0.1'
 
+    compile group: 'com.ocpsoft', name: 'ocpsoft-pretty-time', version: '1.0.6'
+
     debugCompile 'com.squareup.leakcanary:leakcanary-android:1.4-beta2'
     releaseCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.4-beta2'
     testCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.4-beta2'

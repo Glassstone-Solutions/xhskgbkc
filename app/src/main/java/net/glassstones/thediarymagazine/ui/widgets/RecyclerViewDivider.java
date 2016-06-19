@@ -1,4 +1,4 @@
-package net.glassstones.thediarymagazine.utils;
+package net.glassstones.thediarymagazine.ui.widgets;
 
 import android.content.Context;
 import android.graphics.Canvas;

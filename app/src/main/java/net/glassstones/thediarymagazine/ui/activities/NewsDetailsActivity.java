@@ -21,10 +21,12 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebSettings;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
@@ -39,15 +41,18 @@ import net.glassstones.thediarymagazine.models.NI;
 import net.glassstones.thediarymagazine.models.Post;
 import net.glassstones.thediarymagazine.models.WPMedia;
 import net.glassstones.thediarymagazine.network.ServiceGenerator;
+import net.glassstones.thediarymagazine.ui.widgets.CustomTextView;
 import net.glassstones.thediarymagazine.ui.widgets.NestedWebView;
 import net.glassstones.thediarymagazine.ui.widgets.TopAlignedImageView;
 import net.glassstones.thediarymagazine.utils.RealmUtils;
 import net.glassstones.thediarymagazine.utils.UIUtils;
 
 import java.io.ByteArrayOutputStream;
+import java.text.ParseException;
 import java.util.List;
 
 import butterknife.InjectView;
+import io.realm.Realm;
 import retrofit.Call;
 import retrofit.Callback;
 import retrofit.Response;
@@ -71,11 +76,21 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
     @InjectView(R.id.web_view)
     NestedWebView webView;
     ServiceGenerator sg;
+    @InjectView(R.id.title)
+    CustomTextView title;
+    @InjectView(R.id.title_wrap)
+    LinearLayout titleWrap;
+
+    @InjectView(R.id.source)
+    CustomTextView source;
+    @InjectView(R.id.timestamp)
+    CustomTextView timestamp;
+
     TDMAPIClient client;
+
     Window window;
-
     Post post;
-
+    Realm realm;
     RealmUtils realmUtils;
 
     @Override
@@ -99,7 +114,9 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
 
         window = this.getWindow();
 
-        realmUtils = new RealmUtils(Common.getRealm(), this);
+        realm = Realm.getDefaultInstance();
+
+        realmUtils = new RealmUtils(realm, this);
 
         sg = new ServiceGenerator(app);
 
@@ -196,6 +213,16 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
     private void initPost(Post body) {
 
         post = body;
+
+        title.setText(post.getTitle());
+
+        try {
+            String date = UIUtils.getTimeAgo(post.getCreated_at());
+            timestamp.setText(date);
+        } catch (ParseException e) {
+            timestamp.setVisibility(View.GONE);
+            e.printStackTrace();
+        }
 
         if (!post.isMediaSaved()) {
             Call<WPMedia> media = client.getMedia(body.getFeatured_media());

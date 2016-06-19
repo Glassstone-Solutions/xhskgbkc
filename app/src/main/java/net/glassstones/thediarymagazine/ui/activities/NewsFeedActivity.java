@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.InjectView;
+import io.realm.Realm;
 import retrofit.Call;
 import retrofit.Response;
 
@@ -50,6 +51,8 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
     ViewPager mPager;
 
     ParseUser mCurrentUser;
+
+    Realm realm;
 
     RealmUtils realmUtils;
 
@@ -131,8 +134,16 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
 
         request.execute();
 
-        realmUtils = new RealmUtils(Common.getRealm(), this);
+        realm = Realm.getDefaultInstance();
 
+        realmUtils = new RealmUtils(realm, this);
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        realmUtils.closeRealm();
     }
 
     private void doSplash() {
@@ -260,7 +271,7 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
     public void onPostResponse(Response<ArrayList<NI>> respose) {
         List<NI> posts = respose.body();
         List<Post> rPosts = new ArrayList<>();
-        for (NI p : posts){
+        for (NI p : posts) {
             rPosts.add(realmUtils.NI2Post(p, null));
         }
         realmUtils.savePosts(rPosts);

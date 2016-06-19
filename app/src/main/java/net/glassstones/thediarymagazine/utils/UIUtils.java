@@ -11,10 +11,13 @@ import android.view.Display;
 import android.view.WindowManager;
 
 
+import com.ocpsoft.pretty.time.PrettyTime;
+
 import net.glassstones.thediarymagazine.R;
 
 import java.text.DateFormat;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -153,6 +156,13 @@ public class UIUtils {
         DateFormat format = new SimpleDateFormat("mm:ss", locale);
 
         return format.format(d);
+    }
+
+    public static String getTimeAgo(String time) throws ParseException {
+        PrettyTime p = new PrettyTime();
+        DateFormat format = new SimpleDateFormat("yyyy-mm-dd'T'hh:mm:ss", Locale.ENGLISH);
+        Date date = format.parse(time);
+        return p.format(date);
     }
 
 

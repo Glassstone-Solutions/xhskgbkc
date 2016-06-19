@@ -6,4 +6,9 @@
         android:icon="@drawable/ic_action_share"
         android:orderInCategory="100"
         app:showAsAction="ifRoom" />
+    <item android:id="@+id/action_comment"
+        android:title="@string/action_comment"
+        android:icon="@drawable/ic_action_comments"
+        android:orderInCategory="100"
+        app:showAsAction="ifRoom" />
 </menu>
