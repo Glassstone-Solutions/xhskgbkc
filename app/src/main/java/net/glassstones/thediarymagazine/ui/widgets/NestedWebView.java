@@ -12,6 +12,7 @@ import android.webkit.WebView;
 /**
  * Created by Thompson on 11/06/2016.
  * For The Diary Magazine
+ * TODO: Fix scroll bug
  */
 public class NestedWebView extends WebView implements NestedScrollingChild {
     private final int[] mScrollOffset = new int[2];

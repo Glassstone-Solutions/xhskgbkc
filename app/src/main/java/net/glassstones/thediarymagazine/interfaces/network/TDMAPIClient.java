@@ -21,6 +21,8 @@ public interface TDMAPIClient {
     Call<NI> getPost(@Path("id") int id);
     @GET("wp-json/wp/v2/posts")
     Call<NI> getPostFromSlug(@Query("slug") String slug);
+    @GET("wp-json/wp/v2/posts")
+    Call<NI>getPostsByCategory(@Query("categories") int category);
     @GET("wp-json/wp/v2/media/{id}")
     Call<WPMedia> getMedia(@Path("id") int id);
 }
