@@ -130,12 +130,12 @@ public class RealmUtils {
                 p.setMediaId(media.getId());
                 p.setSource_url(media.getSourceUrl());
                 p.setMediaSaved(true);
-                Log.e("TAG", "Media Saved");
             }
         }, new Realm.Transaction.OnSuccess() {
             @Override
             public void onSuccess() {
                 listner.realmChange(p);
+                Log.e("TAG", "Media Saved");
             }
         }, new Realm.Transaction.OnError() {
             @Override

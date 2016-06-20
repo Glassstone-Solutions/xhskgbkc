@@ -23,7 +23,7 @@
             app:contentScrim="?attr/colorPrimary"
             app:expandedTitleMarginEnd="64dp"
             app:expandedTitleMarginStart="48dp"
-            app:layout_scrollFlags="scroll|snap">
+            app:layout_scrollFlags="scroll">
 
             <net.glassstones.thediarymagazine.ui.widgets.TopAlignedImageView
                 android:id="@+id/header"
@@ -39,7 +39,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 app:layout_collapseMode="pin"
-                app:layout_scrollFlags="scroll|snap"
+                app:layout_scrollFlags="scroll"
                 app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
         </android.support.design.widget.CollapsingToolbarLayout>
@@ -51,7 +51,7 @@
             android:background="@android:color/white"
             android:orientation="vertical"
             android:gravity="center"
-            app:layout_scrollFlags="scroll|enterAlways|snap"
+            app:layout_scrollFlags="scroll|enterAlways"
             android:padding="16dp">
 
             <net.glassstones.thediarymagazine.ui.widgets.CustomTextView
@@ -65,7 +65,8 @@
                 android:textColor="@color/colorSource"
                 android:textSize="18sp"
                 android:textAlignment="center"
-                app:font="@string/fira" />
+                app:font="@string/fira"
+                app:textStyle="@integer/font_style_extra_bold"/>
 
             <View
                 android:layout_width="128dp"
