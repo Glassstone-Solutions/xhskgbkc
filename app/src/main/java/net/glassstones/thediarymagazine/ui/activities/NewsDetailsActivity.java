@@ -15,6 +15,7 @@ import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.NavUtils;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
@@ -114,6 +115,10 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         window = this.getWindow();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.colorPrimaryDark));
+        }
 
         realm = Realm.getDefaultInstance();
 
@@ -316,11 +321,13 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
 
     }
 
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+
     private void changeStatusBar(int statusBarColor) {
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-        window.setStatusBarColor(statusBarColor);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            window.setStatusBarColor(statusBarColor);
+        }
     }
 
     private void showToast(String s) {

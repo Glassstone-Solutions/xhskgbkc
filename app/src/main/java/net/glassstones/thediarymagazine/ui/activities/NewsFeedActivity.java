@@ -1,5 +1,6 @@
 package net.glassstones.thediarymagazine.ui.activities;
 
+import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -25,6 +26,8 @@ import net.glassstones.thediarymagazine.models.Post;
 import net.glassstones.thediarymagazine.models.PostEvent;
 import net.glassstones.thediarymagazine.network.Request;
 import net.glassstones.thediarymagazine.network.ServiceGenerator;
+import net.glassstones.thediarymagazine.services.UpdateLocalPostsImageService;
+import net.glassstones.thediarymagazine.services.UpdateLocalPostsService;
 import net.glassstones.thediarymagazine.ui.adapters.MyFragmentAdapter;
 import net.glassstones.thediarymagazine.ui.fragments.DashboardFragment;
 import net.glassstones.thediarymagazine.ui.fragments.NewsFragment;
@@ -39,23 +42,25 @@ import java.util.List;
 
 import butterknife.InjectView;
 import io.realm.Realm;
+import me.tatarka.support.job.JobInfo;
+import me.tatarka.support.job.JobScheduler;
+import me.tatarka.support.os.PersistableBundle;
 import retrofit.Call;
 import retrofit.Response;
 
 
 public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmInterface, NetworkOperations {
 
+    private static final int FETCH_JOB_ID = 100;
+    private static final int FETCH_IMAGE_JOB_ID = 200;
     @InjectView(R.id.menu_tab)
     TabLayout mTabLayout;
     @InjectView(R.id.pager)
     ViewPager mPager;
-
     ParseUser mCurrentUser;
-
     Realm realm;
-
     RealmUtils realmUtils;
-
+    private JobScheduler jobScheduler;
     private int[] tabIcons = {
             R.drawable.ic_home,
             R.drawable.ic_dashboard,
@@ -63,7 +68,6 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
             R.drawable.ic_favorite,
             R.drawable.shopping_basket
     };
-
     private int[] defaultTabIcons = {
             R.drawable.ic_home_unselected,
             R.drawable.ic_dashboard_unselected,
@@ -72,16 +76,40 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
             R.drawable.shopping_basket_unselected
     };
 
+    private void constructFetchJob() {
+        PersistableBundle bundle = new PersistableBundle();
+        JobInfo.Builder builder = new JobInfo.Builder(FETCH_JOB_ID, new ComponentName(this, UpdateLocalPostsService.class));
+        builder.setPeriodic(3600000)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setExtras(bundle)
+                .setPersisted(true);
+        jobScheduler.schedule(builder.build());
+    }
+
+    private void constructImageFetchJob(){
+        PersistableBundle bundle = new PersistableBundle();
+        JobInfo.Builder builder = new JobInfo.Builder(FETCH_IMAGE_JOB_ID, new ComponentName(this, UpdateLocalPostsImageService.class));
+        builder.setPeriodic(300000)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setExtras(bundle)
+                .setPersisted(true);
+        jobScheduler.schedule(builder.build());
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.colorPrimaryDark));
         }
-        if (HelperSharedPreferences.getSharedPreferencesBoolean(this, Common.KEY_FIRST_RUN, true))
+        if (HelperSharedPreferences.getSharedPreferencesBoolean(this, Common.KEY_FIRST_RUN, true)) {
             doSplash();
-        else
+        } else {
             init();
+            jobScheduler = JobScheduler.getInstance(this);
+            constructFetchJob();
+            constructImageFetchJob();
+        }
         mCurrentUser = ParseUser.getCurrentUser();
 
         final com.avocarrot.androidsdk.AvocarrotCustom avocarrotCustom =

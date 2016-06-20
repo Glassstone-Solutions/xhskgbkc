@@ -4,6 +4,7 @@ import android.util.Log;
 
 import net.glassstones.thediarymagazine.models.NI;
 import net.glassstones.thediarymagazine.models.Post;
+import net.glassstones.thediarymagazine.models.WPMedia;
 
 import java.util.List;
 
@@ -116,6 +117,32 @@ public class RealmUtils {
             post.setMediaSaved(true);
             mRealm.commitTransaction();
         }
+    }
+
+    public void saveMedia(final WPMedia media, final Post p) {
+        final String url = media.getSourceUrl();
+        mRealm.executeTransactionAsync(new Realm.Transaction() {
+            @Override
+            public void execute(Realm realm) {
+                p.setImageByte(BitmapUtils.getByteArray(BitmapUtils.getBitmapFromURL(url)));
+                p.setMime_type(media.getMime_type());
+                p.setMedia_type(media.getMedia_type());
+                p.setMediaId(media.getId());
+                p.setSource_url(media.getSourceUrl());
+                p.setMediaSaved(true);
+                Log.e("TAG", "Media Saved");
+            }
+        }, new Realm.Transaction.OnSuccess() {
+            @Override
+            public void onSuccess() {
+                listner.realmChange(p);
+            }
+        }, new Realm.Transaction.OnError() {
+            @Override
+            public void onError(Throwable error) {
+                listner.postSaveFailed(p, error);
+            }
+        });
     }
 
     public interface RealmInterface {
