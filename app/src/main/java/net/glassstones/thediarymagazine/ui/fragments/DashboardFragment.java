@@ -4,10 +4,8 @@ package net.glassstones.thediarymagazine.ui.fragments;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,9 +14,8 @@ import android.widget.ImageView;
 import com.bumptech.glide.Glide;
 
 import net.glassstones.thediarymagazine.R;
-import net.glassstones.thediarymagazine.ui.activities.LoginActivity;
+import net.glassstones.thediarymagazine.ui.activities.CategoryActivity;
 import net.glassstones.thediarymagazine.ui.widgets.CustomTextView;
-import net.glassstones.thediarymagazine.ui.widgets.ImageViewTopCrop;
 import net.glassstones.thediarymagazine.utils.UIUtils;
 
 import butterknife.ButterKnife;
@@ -155,10 +152,10 @@ public class DashboardFragment extends Fragment {
             }
 
             @OnClick({R.id.bg_img, R.id.label})
-            void onAnyClick(View v){
+            void onAnyClick(View v) {
                 int pos = getAdapterPosition();
                 // TODO: Create Category filtered news flip activity
-                Intent i = new Intent(getActivity(), LoginActivity.class);
+                Intent i = new Intent(getActivity(), CategoryActivity.class);
                 i.putExtra("cat", cat_id[pos]);
                 getActivity().startActivity(i);
             }

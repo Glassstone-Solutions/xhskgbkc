@@ -101,4 +101,5 @@
     <string name="title_activity_news_details">NewsDetailsActivity</string>
     <string name="action_share">Share</string>
     <string name="action_comment">Comment</string>
+    <string name="title_activity_category">Category</string>
 </resources>

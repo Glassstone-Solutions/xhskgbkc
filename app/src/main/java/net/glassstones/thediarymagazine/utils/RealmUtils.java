@@ -2,6 +2,7 @@ package net.glassstones.thediarymagazine.utils;
 
 import android.util.Log;
 
+import net.glassstones.thediarymagazine.models.Categories;
 import net.glassstones.thediarymagazine.models.NI;
 import net.glassstones.thediarymagazine.models.Post;
 import net.glassstones.thediarymagazine.models.WPMedia;
@@ -20,12 +21,16 @@ public class RealmUtils {
     private final Realm mRealm;
     private RealmInterface listner;
 
+    public RealmUtils(Realm mRealm) {
+        this.mRealm = mRealm;
+    }
+
     public RealmUtils(final Realm realm, RealmInterface realmInterface) {
         this.mRealm = realm;
         this.listner = realmInterface;
     }
 
-    public void savePosts(final List<Post> posts) {
+    public void savePosts(final List<NI> nis, final List<Post> posts) {
         Log.e("SavePosts", "Saving Posts");
         mRealm.executeTransactionAsync(new Realm.Transaction() {
             @Override
@@ -36,7 +41,7 @@ public class RealmUtils {
             @Override
             public void onSuccess() {
                 Log.e("SavePosts", "Saved Posts");
-                listner.realmChange(posts);
+                listner.realmChange(nis);
             }
         });
     }
@@ -72,7 +77,7 @@ public class RealmUtils {
         });
     }
 
-    public void closeRealm(){
+    public void closeRealm() {
         mRealm.close();
     }
 
@@ -80,7 +85,7 @@ public class RealmUtils {
         return mRealm.where(Post.class).equalTo(filterKey, filterValue).findFirst();
     }
 
-    public Post NI2Post(NI ni, byte[] media){
+    public Post NI2Post(NI ni, byte[] media) {
         Post p = new Post();
 
         mRealm.beginTransaction();
@@ -94,7 +99,7 @@ public class RealmUtils {
         p.setContent(ni.getContent().getContent());
         p.setAuthorId(ni.getAuthorId());
         p.setFeatured_media(ni.getFeatured_media());
-        if (media != null){
+        if (media != null) {
             p.setImageByte(media);
             p.setMediaSaved(true);
             p.setMediaId(ni.getMedia().getId());
@@ -145,10 +150,36 @@ public class RealmUtils {
         });
     }
 
+    public void updatePost(final NI niPost, final Post post) {
+        if (post.getCategories().size() == 0 || post.getCategories().size() < post.getCategories().size()) {
+            mRealm.executeTransactionAsync(new Realm.Transaction() {
+                @Override
+                public void execute(Realm realm) {
+                    for (int cat : niPost.getCategories()) {
+                        Categories categories = realm.createObject(Categories.class);
+                        categories.setId(cat);
+                        post.getCategories().add(categories);
+                    }
+                }
+            }, new Realm.Transaction.OnSuccess() {
+                @Override
+                public void onSuccess() {
+                    listner.realmChange(post);
+                }
+            }, new Realm.Transaction.OnError() {
+                @Override
+                public void onError(Throwable error) {
+                    listner.postSaveFailed(post, error);
+                }
+            });
+        }
+    }
+
     public interface RealmInterface {
-        void realmChange(List<Post> posts);
 
         void realmChange(Post post);
+
+        void realmChange(List<NI> p);
 
         void postSaveFailed(Post post, Throwable t);
     }

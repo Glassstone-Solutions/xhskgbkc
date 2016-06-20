@@ -86,7 +86,7 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
         jobScheduler.schedule(builder.build());
     }
 
-    private void constructImageFetchJob(){
+    private void constructImageFetchJob() {
         PersistableBundle bundle = new PersistableBundle();
         JobInfo.Builder builder = new JobInfo.Builder(FETCH_IMAGE_JOB_ID, new ComponentName(this, UpdateLocalPostsImageService.class));
         builder.setPeriodic(300000)
@@ -273,15 +273,6 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
     }
 
     @Override
-    public void realmChange(List<Post> posts) {
-        EventBus.getDefault().post(new PostEvent()
-                .id(PostEvent.LIST_CHANGE)
-                .status(PostEvent.SAVED)
-                .type(PostEvent.POST_LIST)
-        );
-    }
-
-    @Override
     public void realmChange(Post post) {
         EventBus.getDefault().post(new PostEvent()
                 .id(post.getId())
@@ -291,18 +282,26 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
     }
 
     @Override
+    public void realmChange(List<NI> p) {
+        for (NI pos : p) {
+            Post post = realmUtils.getPost(Post.ID, pos.getId());
+            realmUtils.updatePost(pos, post);
+        }
+    }
+
+    @Override
     public void postSaveFailed(Post post, Throwable t) {
 
     }
 
     @Override
-    public void onPostResponse(Response<ArrayList<NI>> respose) {
-        List<NI> posts = respose.body();
+    public void onPostResponse(Response<ArrayList<NI>> response) {
+        List<NI> posts = response.body();
         List<Post> rPosts = new ArrayList<>();
         for (NI p : posts) {
             rPosts.add(realmUtils.NI2Post(p, null));
         }
-        realmUtils.savePosts(rPosts);
+        realmUtils.savePosts(posts, rPosts);
     }
 
     @Override

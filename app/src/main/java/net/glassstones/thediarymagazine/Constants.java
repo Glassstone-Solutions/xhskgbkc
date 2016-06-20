@@ -6,4 +6,12 @@ package net.glassstones.thediarymagazine;
  */
 public class Constants {
     public static final String APP_PREFIX = "TDM";
+    public static final int CATEGORY_NEWS = 20;
+    public static final int CATEGORY_BUSINESS = 4;
+    public static final int CATEGORY_ENTERTAINMENT = 27;
+    public static final int CATEGORY_SPORTS = 14;
+    public static final int CATEGORY_LIFESTYLE = 34;
+    public static final int CATEGORY_WELLBIENG = 37;
+
+    public static final int[] CATEGOIRES = {CATEGORY_NEWS, CATEGORY_BUSINESS, CATEGORY_ENTERTAINMENT, CATEGORY_SPORTS, CATEGORY_LIFESTYLE, CATEGORY_WELLBIENG};
 }

@@ -2,6 +2,8 @@ package net.glassstones.thediarymagazine.models;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.List;
+
 import io.realm.RealmObject;
 import io.realm.annotations.PrimaryKey;
 
@@ -27,6 +29,7 @@ public class NI {
     private int authorId;
     private int featured_media;
     private WPMedia media;
+    List<Integer> categories;
 
     public NI() {
     }
@@ -119,4 +122,11 @@ public class NI {
         this.media = media;
     }
 
+    public List<Integer> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<Integer> categories) {
+        this.categories = categories;
+    }
 }

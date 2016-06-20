@@ -335,12 +335,12 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
     }
 
     @Override
-    public void realmChange(List<Post> posts) {
+    public void realmChange(Post post) {
 
     }
 
     @Override
-    public void realmChange(Post post) {
+    public void realmChange(List<NI> p) {
 
     }
 
