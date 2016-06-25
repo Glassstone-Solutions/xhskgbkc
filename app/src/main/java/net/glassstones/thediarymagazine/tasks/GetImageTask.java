@@ -26,6 +26,7 @@ import retrofit.Retrofit;
  */
 public class GetImageTask implements RealmUtils.RealmInterface {
 
+    private static final String TAG = GetImageTask.class.getSimpleName();
     TDMAPIClient client;
     Realm realm;
     RealmUtils realmUtils;

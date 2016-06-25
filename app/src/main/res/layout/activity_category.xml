@@ -3,6 +3,21 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:flipview="http://schemas.android.com/apk/res-auto"
     tools:context="net.glassstones.thediarymagazine.ui.activities.CategoryActivity">
+
+    <ProgressBar
+        android:id="@+id/progress"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
+        android:layout_centerInParent="true"
+        android:visibility="invisible"/>
+
+    <se.emilsjolander.flipview.FlipView
+        android:id="@+id/list"
+        android:background="#ffffff"
+        flipview:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
 </RelativeLayout>

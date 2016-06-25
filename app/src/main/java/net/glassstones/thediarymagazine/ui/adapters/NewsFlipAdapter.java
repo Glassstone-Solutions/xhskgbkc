@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.text.Html;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,7 +31,6 @@ import net.glassstones.thediarymagazine.network.ServiceGenerator;
 import net.glassstones.thediarymagazine.ui.widgets.CustomTextView;
 import net.glassstones.thediarymagazine.ui.widgets.TopAlignedImageView;
 
-import java.io.ByteArrayOutputStream;
 import java.util.List;
 
 import butterknife.ButterKnife;
@@ -170,7 +168,6 @@ public class NewsFlipAdapter extends BaseAdapter {
     }
 
     private void returnView(View convertView, int type) {
-        Log.e("TAG", String.valueOf(type));
         if (TYPE_HEADLINE == type) {
             if (convertView.getTag() instanceof Headline)
                 holder = (Headline) convertView.getTag();
@@ -229,7 +226,9 @@ public class NewsFlipAdapter extends BaseAdapter {
                     t1 = vh.getTitle1();
                     i1 = vh.getSplash1();
 
-                    t1.setText(Html.fromHtml(ni.getPost().getTitle()));
+                    if (ni.getPost().getTitle() != null) {
+                        t1.setText(Html.fromHtml(ni.getPost().getTitle()));
+                    }
                     setImage(ni, i1);
 
                     setTextSize(t1, 18);
@@ -248,7 +247,9 @@ public class NewsFlipAdapter extends BaseAdapter {
                     t2 = vh.getTitle2();
                     i2 = vh.getSplash2();
 
-                    t2.setText(Html.fromHtml(ni.getPost().getTitle()));
+                    if (ni.getPost().getTitle() != null) {
+                        t2.setText(Html.fromHtml(ni.getPost().getTitle()));
+                    }
                     setImage(ni, i2);
 
                     setTextSize(t2, 18);
@@ -281,7 +282,9 @@ public class NewsFlipAdapter extends BaseAdapter {
                     t1 = vh.getTitle1();
                     i1 = vh.getSplash1();
 
-                    t1.setText(Html.fromHtml(ni.getPost().getTitle()));
+                    if (ni.getPost().getTitle() != null) {
+                        t1.setText(Html.fromHtml(ni.getPost().getTitle()));
+                    }
                     setImage(ni, i1);
 
                     setTextSize(t1, 18);
@@ -300,7 +303,9 @@ public class NewsFlipAdapter extends BaseAdapter {
                     t2 = vh.getTitle2();
                     i2 = vh.getSplash2();
 
-                    t2.setText(Html.fromHtml(ni.getPost().getTitle()));
+                    if (ni.getPost().getTitle() != null) {
+                        t2.setText(Html.fromHtml(ni.getPost().getTitle()));
+                    }
                     setImage(ni, i2);
 
                     setTextSize(t2, 14);
@@ -318,7 +323,9 @@ public class NewsFlipAdapter extends BaseAdapter {
                     t3 = vh.getTitle3();
                     i3 = vh.getSplash3();
 
-                    t3.setText(Html.fromHtml(ni.getPost().getTitle()));
+                    if (ni.getPost().getTitle() != null) {
+                        t3.setText(Html.fromHtml(ni.getPost().getTitle()));
+                    }
                     setImage(ni, i3);
 
                     setTextSize(t3, 14);
@@ -348,7 +355,9 @@ public class NewsFlipAdapter extends BaseAdapter {
 
             TextView t = vh.getTitle();
 
-            t.setText(Html.fromHtml(ni.getPost().getTitle()));
+            if (ni.getPost().getTitle() != null) {
+                t.setText(Html.fromHtml(ni.getPost().getTitle()));
+            }
 
             if (ni.getPost().getTitle().length() > 55) {
                 setTextSize(vh.getTitle(), 18);

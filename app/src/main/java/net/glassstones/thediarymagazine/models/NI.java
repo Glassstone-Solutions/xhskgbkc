@@ -129,4 +129,22 @@ public class NI {
     public void setCategories(List<Integer> categories) {
         this.categories = categories;
     }
+
+    @Override
+    public String toString() {
+        return "NI{" +
+                "id=" + id +
+                ", created_at='" + created_at + '\'' +
+                ", slug='" + slug + '\'' +
+                ", type='" + type + '\'' +
+                ", link='" + link + '\'' +
+                ", title=" + title +
+                ", content=" + content +
+                ", excerpt=" + excerpt +
+                ", authorId=" + authorId +
+                ", featured_media=" + featured_media +
+                ", media=" + media +
+                ", categories=" + categories +
+                '}';
+    }
 }

@@ -1,7 +1,6 @@
 package net.glassstones.thediarymagazine.ui.activities;
 
 import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -96,17 +95,17 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
     RealmUtils realmUtils;
 
     @Override
-    public Class clazz() {
+    public Class clazz () {
         return this.getClass();
     }
 
     @Override
-    public int resourceId() {
+    public int resourceId () {
         return R.layout.activity_news_details;
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate (Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Common app = (Common) getApplication();
         assert getSupportActionBar() != null;
@@ -138,7 +137,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
                 Call<NI> getPost = client.getPost(Integer.parseInt(idString));
                 getPost.enqueue(new Callback<NI>() {
                     @Override
-                    public void onResponse(Response<NI> response, Retrofit retrofit) {
+                    public void onResponse (Response<NI> response, Retrofit retrofit) {
                         if (response.isSuccess()) {
                             NI post = response.body();
                             initPost(realmUtils.NI2Post(post, null));
@@ -148,7 +147,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
                     }
 
                     @Override
-                    public void onFailure(Throwable t) {
+                    public void onFailure (Throwable t) {
                         handleFailure(t);
                     }
                 });
@@ -157,7 +156,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
                 Call<NI> slugPost = client.getPostFromSlug(name);
                 slugPost.enqueue(new Callback<NI>() {
                     @Override
-                    public void onResponse(Response<NI> response, Retrofit retrofit) {
+                    public void onResponse (Response<NI> response, Retrofit retrofit) {
                         if (response.isSuccess()) {
                             NI post = response.body();
                             initPost(realmUtils.NI2Post(post, null));
@@ -167,7 +166,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
                     }
 
                     @Override
-                    public void onFailure(Throwable t) {
+                    public void onFailure (Throwable t) {
                         handleFailure(t);
                     }
                 });
@@ -181,42 +180,8 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        realmUtils.closeRealm();
-        realmUtils = null;
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.details_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_share) {
-            if (post != null) {
-                Intent intent = new Intent(Intent.ACTION_SEND);
-                intent.putExtra(Intent.EXTRA_TEXT, post.getTitle() + "\n\n" + post.getLink());
-                intent.setType("text/plain");
-                startActivity(Intent.createChooser(intent, "Share this via"));
-            }
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
     @SuppressLint("SetJavaScriptEnabled")
-    private void initPost(Post body) {
+    private void initPost (Post body) {
 
         post = body;
 
@@ -235,21 +200,21 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
 
             media.enqueue(new Callback<WPMedia>() {
                 @Override
-                public void onResponse(Response<WPMedia> response, Retrofit retrofit) {
+                public void onResponse (Response<WPMedia> response, Retrofit retrofit) {
                     if (response.isSuccess()) {
                         Glide.with(getApplicationContext())
                                 .load(Uri.parse(response.body().getSourceUrl()))
                                 .asBitmap()
                                 .into(new SimpleTarget<Bitmap>(myWidth, myHeight) {
                                     @Override
-                                    public void onResourceReady(final Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                                    public void onResourceReady (final Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
                                         ByteArrayOutputStream stream = new ByteArrayOutputStream();
                                         resource.compress(Bitmap.CompressFormat.JPEG, 100, stream);
                                         byte[] byteArray = stream.toByteArray();
                                         realmUtils.updatePostMedia(post, byteArray);
                                         Palette.from(resource).generate(new Palette.PaletteAsyncListener() {
                                             @Override
-                                            public void onGenerated(Palette palette) {
+                                            public void onGenerated (Palette palette) {
                                                 setupImage(palette, resource);
                                             }
                                         });
@@ -259,7 +224,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
                 }
 
                 @Override
-                public void onFailure(Throwable t) {
+                public void onFailure (Throwable t) {
 
                 }
             });
@@ -268,7 +233,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
 
             Palette.from(image).generate(new Palette.PaletteAsyncListener() {
                 @Override
-                public void onGenerated(Palette palette) {
+                public void onGenerated (Palette palette) {
                     setupImage(palette, image);
                 }
             });
@@ -277,8 +242,23 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
         setupWebView(webView, body);
     }
 
+    private void handleFailure (Throwable t) {
+
+    }
+
+    private void showToast (String s) {
+        Snackbar.make(mRoot, s, Snackbar.LENGTH_LONG).show();
+    }
+
+    private void setupImage (Palette palette, Bitmap image) {
+        int mutedColor = palette.getMutedColor(getResources().getColor(R.color.colorPrimary));
+        collapsingToolbar.setContentScrimColor(mutedColor);
+        changeStatusBar(mutedColor);
+        header.setImageBitmap(image);
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
-    private void setupWebView(NestedWebView webView, Post post) {
+    private void setupWebView (NestedWebView webView, Post post) {
         webView.addJavascriptInterface(new WebAppInterface(this), "Android");
         webView.setScrollbarFadingEnabled(true);
         WebSettings settings = webView.getSettings();
@@ -289,8 +269,16 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
         webView.loadDataWithBaseURL("file:///android_asset/", sb, "text/html", "utf-8", null);
     }
 
+    private void changeStatusBar (int statusBarColor) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            window.setStatusBarColor(statusBarColor);
+        }
+    }
+
     @NonNull
-    private String getPostString(Post post) {
+    private String getPostString (Post post) {
         return String.format("<!DOCTYPE html><HTML lang=\"en\">" +
                 "<HEAD>" +
                 "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css\"" +
@@ -310,42 +298,52 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
                 "</script></body></HTML>", post.getContent());
     }
 
-    private void setupImage(Palette palette, Bitmap image) {
-        int mutedColor = palette.getMutedColor(getResources().getColor(R.color.colorPrimary));
-        collapsingToolbar.setContentScrimColor(mutedColor);
-        changeStatusBar(mutedColor);
-        header.setImageBitmap(image);
+    @Override
+    protected void onDestroy () {
+        super.onDestroy();
+        realmUtils.closeRealm();
+        realmUtils = null;
     }
 
-    private void handleFailure(Throwable t) {
-
+    @Override
+    public boolean onCreateOptionsMenu (Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.details_menu, menu);
+        return true;
     }
 
+    @Override
+    public boolean onOptionsItemSelected (MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
 
-    private void changeStatusBar(int statusBarColor) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-            window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-            window.setStatusBarColor(statusBarColor);
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_share) {
+            if (post != null) {
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.putExtra(Intent.EXTRA_TEXT, post.getTitle() + "\n\n" + post.getLink());
+                intent.setType("text/plain");
+                startActivity(Intent.createChooser(intent, "Share this via"));
+            }
+            return true;
         }
-    }
-
-    private void showToast(String s) {
-        Snackbar.make(mRoot, s, Snackbar.LENGTH_LONG).show();
+        return super.onOptionsItemSelected(item);
     }
 
     @Override
-    public void realmChange(Post post) {
+    public void realmChange (Post post) {
 
     }
 
     @Override
-    public void realmChange(List<NI> p) {
+    public void realmChange (List<NI> p) {
 
     }
 
     @Override
-    public void postSaveFailed(Post post, Throwable t) {
+    public void postSaveFailed (Post post, Throwable t) {
 
     }
 
@@ -353,7 +351,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
 
         Context mContext;
 
-        public WebAppInterface(Context context) {
+        public WebAppInterface (Context context) {
             this.mContext = context;
         }
 
@@ -361,7 +359,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
          * Show a toast from the web page
          */
         @JavascriptInterface
-        public void showToast(String toast) {
+        public void showToast (String toast) {
             Toast.makeText(mContext, toast, Toast.LENGTH_SHORT).show();
         }
 

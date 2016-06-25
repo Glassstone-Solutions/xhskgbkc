@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -49,7 +50,8 @@ import retrofit.Call;
 import retrofit.Response;
 
 
-public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmInterface, NetworkOperations {
+public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmInterface,
+        NetworkOperations {
 
     private static final int FETCH_JOB_ID = 100;
     private static final int FETCH_IMAGE_JOB_ID = 200;
@@ -78,7 +80,8 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
 
     private void constructFetchJob() {
         PersistableBundle bundle = new PersistableBundle();
-        JobInfo.Builder builder = new JobInfo.Builder(FETCH_JOB_ID, new ComponentName(this, UpdateLocalPostsService.class));
+        JobInfo.Builder builder = new JobInfo.Builder(FETCH_JOB_ID,
+                new ComponentName(this, UpdateLocalPostsService.class));
         builder.setPeriodic(3600000)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setExtras(bundle)
@@ -88,7 +91,8 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
 
     private void constructImageFetchJob() {
         PersistableBundle bundle = new PersistableBundle();
-        JobInfo.Builder builder = new JobInfo.Builder(FETCH_IMAGE_JOB_ID, new ComponentName(this, UpdateLocalPostsImageService.class));
+        JobInfo.Builder builder = new JobInfo.Builder(FETCH_IMAGE_JOB_ID,
+                new ComponentName(this, UpdateLocalPostsImageService.class));
         builder.setPeriodic(300000)
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setExtras(bundle)
@@ -109,69 +113,68 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
             jobScheduler = JobScheduler.getInstance(this);
             constructFetchJob();
             constructImageFetchJob();
-        }
-        mCurrentUser = ParseUser.getCurrentUser();
+            mCurrentUser = ParseUser.getCurrentUser();
 
-        final com.avocarrot.androidsdk.AvocarrotCustom avocarrotCustom =
-                new com.avocarrot.androidsdk.AvocarrotCustom(
-                        this,                     /* reference to your Activity */
-                        "87d7278ea00dbfe6a1e8afed92ceadc9df3aba91", /* this is your Avocarrot API Key */
-                        "41b30d19c03fa5eb8884d558500598f8a58c69e9" /* this is your Avocarrot Placement Key */
-                );
+            final com.avocarrot.androidsdk.AvocarrotCustom avocarrotCustom =
+                    new com.avocarrot.androidsdk.AvocarrotCustom(
+                            this,                     /* reference to your Activity */
+                            "87d7278ea00dbfe6a1e8afed92ceadc9df3aba91", /* this is your Avocarrot API Key */
+                            "41b30d19c03fa5eb8884d558500598f8a58c69e9" /* this is your Avocarrot Placement Key */
+                    );
 
-        if (BuildConfig.DEBUG) {
-            avocarrotCustom.setSandbox(true);
-            avocarrotCustom.setLogger(true, "ALL");
-        }
-
-        avocarrotCustom.setListener(new AvocarrotCustomListener() {
-            @Override
-            public void onAdLoaded(List<CustomModel> ads) {
-                super.onAdLoaded(ads);
-                super.onAdLoaded(ads);
-                if ((ads == null) || (ads.size() < 1)) {
-                    return;
+            if (BuildConfig.DEBUG) {
+                avocarrotCustom.setSandbox(true);
+                avocarrotCustom.setLogger(true, "ALL");
+            }
+            avocarrotCustom.setListener(new AvocarrotCustomListener() {
+                @Override
+                public void onAdLoaded(List<CustomModel> ads) {
+                    super.onAdLoaded(ads);
+                    super.onAdLoaded(ads);
+                    if ((ads == null) || (ads.size() < 1)) {
+                        return;
+                    }
                 }
-            }
 
-            @Override
-            public void onAdError(AdError error) {
-                super.onAdError(error);
-            }
+                @Override
+                public void onAdError(AdError error) {
+                    super.onAdError(error);
+                }
 
-            @Override
-            public void onAdClicked() {
-                super.onAdClicked();
-            }
+                @Override
+                public void onAdClicked() {
+                    super.onAdClicked();
+                }
 
-            @Override
-            public void onAdImpression() {
-                super.onAdImpression();
-            }
-        });
+                @Override
+                public void onAdImpression() {
+                    super.onAdImpression();
+                }
+            });
+            ServiceGenerator sg = new ServiceGenerator((Common) getApplication());
 
-        ServiceGenerator sg = new ServiceGenerator((Common) getApplication());
+            TDMAPIClient client = sg.createService(TDMAPIClient.class);
 
-        TDMAPIClient client = sg.createService(TDMAPIClient.class);
+            Call<ArrayList<NI>> call = client.getPosts(100, 1, null);
 
-        Call<ArrayList<NI>> call = client.getPosts(25, 0, null);
+            Request request = new Request(call);
 
-        Request request = new Request(call);
+            request.setCallback(this);
 
-        request.setCallback(this);
+            request.execute();
 
-        request.execute();
+            realm = Realm.getDefaultInstance();
 
-        realm = Realm.getDefaultInstance();
-
-        realmUtils = new RealmUtils(realm, this);
-
+            realmUtils = new RealmUtils(realm, this);
+        }
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        realmUtils.closeRealm();
+        if (realmUtils != null) {
+            realmUtils.closeRealm();
+        }
     }
 
     private void doSplash() {
@@ -232,8 +235,8 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
 
     private void setupViewPager(ViewPager mPager) {
         MyFragmentAdapter adapter = new MyFragmentAdapter(getSupportFragmentManager());
-
         adapter.addFrag(new NewsFragment());
+//        adapter.addFrag(UnderConstructionFragment.newInstance(defaultTabIcons[2], "Search"));
         adapter.addFrag(new DashboardFragment());
         adapter.addFrag(UnderConstructionFragment.newInstance(defaultTabIcons[2], "Search"));
         adapter.addFrag(UnderConstructionFragment.newInstance(defaultTabIcons[3], "Favorites"));
@@ -297,6 +300,7 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
     @Override
     public void onPostResponse(Response<ArrayList<NI>> response) {
         List<NI> posts = response.body();
+        Log.e(TAG, String.valueOf(posts));
         List<Post> rPosts = new ArrayList<>();
         for (NI p : posts) {
             rPosts.add(realmUtils.NI2Post(p, null));
@@ -306,6 +310,6 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
 
     @Override
     public void onPostRequestFailure(Throwable t) {
-
+        Log.e(TAG, t.getMessage());
     }
 }

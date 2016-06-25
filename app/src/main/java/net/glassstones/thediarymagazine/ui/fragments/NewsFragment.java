@@ -3,7 +3,10 @@ package net.glassstones.thediarymagazine.ui.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +22,7 @@ import net.glassstones.thediarymagazine.ui.adapters.NewsFlipAdapter;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
 
@@ -42,31 +46,29 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
 
     Realm realm;
 
-    public NewsFragment() {
+    // Create the Handler object (on the main thread by default)
+    Handler handler = new Handler(Looper.getMainLooper());
+    // Define the code block to be executed
+    private Runnable runnableCode = new Runnable() {
+        @Override
+        public void run () {
+            // Do something here on the main thread
+            // Repeat this the same runnable code block again another 2 seconds
+            if (clusters.size() == 0) {
+                Log.d("Handlers", "Called on main thread");
+                mAdapter.update(Common.getNewsCluster(realm));
+            }
+            handler.postDelayed(runnableCode, 2000);
+        }
+    };
+
+    public NewsFragment () {
         // Required empty public constructor
     }
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        realm = Realm.getDefaultInstance();
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        EventBus.getDefault().register(this);
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        EventBus.getDefault().unregister(this);
-    }
-
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView (LayoutInflater inflater, ViewGroup container,
+                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_news, container, false);
         ButterKnife.inject(this, view);
@@ -75,9 +77,68 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     }
 
     @Override
-    public void onViewCreated(View view, Bundle savedInstanceState) {
+    public void onStart () {
+        super.onStart();
+        EventBus.getDefault().register(this);
+    }
+
+    @Override
+    public void onResume () {
+        super.onResume();
+    }
+
+    @Override
+    public void onStop () {
+        super.onStop();
+        EventBus.getDefault().unregister(this);
+    }
+
+    @Override
+    public void onDestroyView () {
+        super.onDestroyView();
+        ButterKnife.reset(this);
+    }
+
+    @Override
+    public void onDestroy () {
+        super.onDestroy();
+        handler.removeCallbacks(runnableCode);
+    }
+
+    @Override
+    public void onPageRequested (NewsItem newsItem) {
+        Intent i = new Intent(getActivity(), NewsDetailsActivity.class);
+        i.putExtra("post_id", newsItem.getPost().getId());
+        getActivity().startActivity(i);
+    }
+
+    @Override
+    public void onFlippedToPage (FlipView v, int position, long id) {
+
+    }
+
+    @Override
+    public void onOverFlip (FlipView v, OverFlipMode mode, boolean overFlippingPrevious, float overFlipDistance, float flipDistancePerPage) {
+
+    }
+
+    @Override
+    public Class clazz () {
+        return this.getClass();
+    }
+
+    @Override
+    public void onCreate (@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Log.e(TAG, "On Create");
+        realm = Realm.getDefaultInstance();
+        handler.post(runnableCode);
+    }
+
+    @Override
+    public void onViewCreated (View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        if (realm.where(Post.class).count() > 0){
+        if (realm.where(Post.class).count() > 0) {
             clusters = Common.getNewsCluster(realm);
         } else {
             clusters = new ArrayList<>();
@@ -90,44 +151,9 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
         list.setOverFlipMode(OverFlipMode.RUBBER_BAND);
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        ButterKnife.reset(this);
-    }
-
-    @Override
-    public void onPageRequested(NewsItem newsItem) {
-        Intent i = new Intent(getActivity(), NewsDetailsActivity.class);
-        i.putExtra("post_id", newsItem.getPost().getId());
-        getActivity().startActivity(i);
-    }
-
-    @Override
-    public void onFlippedToPage(FlipView v, int position, long id) {
-
-    }
-
-    @Override
-    public void onOverFlip(FlipView v, OverFlipMode mode, boolean overFlippingPrevious, float overFlipDistance, float flipDistancePerPage) {
-
-    }
-
-    @Override
-    public Class clazz() {
-        return this.getClass();
-    }
-
-    // TODO: Use EventBus to receive Realm change info
-
-    @Subscribe
-    public void onPostEvent(PostEvent event) {
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onPostEvent (PostEvent event) {
+        Log.e(TAG, String.valueOf(event.getType()));
         mAdapter.update(Common.getNewsCluster(realm));
     }
-
 }

@@ -16,13 +16,15 @@ import retrofit.http.Query;
  */
 public interface TDMAPIClient {
     @GET("wp-json/wp/v2/posts")
-    Call<ArrayList<NI>> getPosts(@Query("limit") int limit, @Query("skip") int skip, @Query("slug") String slug);
+    Call<ArrayList<NI>> getPosts(@Query("per_page") int limit, @Query("page") int skip, @Query
+            ("slug") String slug);
     @GET("wp-json/wp/v2/posts/{id}")
     Call<NI> getPost(@Path("id") int id);
     @GET("wp-json/wp/v2/posts")
     Call<NI> getPostFromSlug(@Query("slug") String slug);
     @GET("wp-json/wp/v2/posts")
-    Call<NI>getPostsByCategory(@Query("categories") int category);
+    Call<ArrayList<NI>>getPostsByCategory(@Query("categories") int category, @Query("per_page")
+    int limit, @Query("page") int skip);
     @GET("wp-json/wp/v2/media/{id}")
     Call<WPMedia> getMedia(@Path("id") int id);
 }

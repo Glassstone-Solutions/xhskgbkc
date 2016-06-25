@@ -28,6 +28,7 @@ import net.glassstones.thediarymagazine.models.NewsCluster;
 import net.glassstones.thediarymagazine.models.NewsItem;
 import net.glassstones.thediarymagazine.models.Post;
 import net.glassstones.thediarymagazine.receivers.DeepLinkReceiver;
+import net.glassstones.thediarymagazine.utils.AndroidUtilities;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +44,7 @@ import retrofit.Retrofit;
 public class Common extends Application {
 
     public static final String KEY_FIRST_RUN = "first_run";
+    private static final String TAG = Common.class.getSimpleName();
 
     public static volatile Context applicationContext;
     private static TdmComponent mTDMComponent;
@@ -51,15 +53,22 @@ public class Common extends Application {
     private NetComponent mNetComponent;
     private Tracker mTracker;
 
-    public static void loadingStatus(AVLoadingIndicatorView loadingView, boolean isLoading) {
+    public static void loadingStatus (AVLoadingIndicatorView loadingView, boolean isLoading) {
         loadingView.setVisibility(isLoading ? View.VISIBLE : View.INVISIBLE);
     }
 
-    public static Retrofit getRetrofit() {
+    public static Retrofit getRetrofit () {
         return retrofit;
     }
 
-    private static List<NewsItem> getDemoNews(List<Post> posts) {
+    public static List<NewsCluster> getNewsCluster (Realm realm) {
+        List<Post> p = realm.where(Post.class).findAll();
+        final List<NewsItem> items = getDemoNews(p);
+
+        return getNewsCluster(items);
+    }
+
+    private static List<NewsItem> getDemoNews (List<Post> posts) {
         List<NewsItem> list = new ArrayList<>();
         for (int i = 0; i < posts.size(); i++) {
             NewsItem item = new NewsItem();
@@ -69,71 +78,59 @@ public class Common extends Application {
         return list;
     }
 
-    private static List<NewsCluster> getNewsCluster(List<NewsItem> list) {
+    private static List<NewsCluster> getNewsCluster (List<NewsItem> list) {
 
         List<NewsCluster> cluster = new ArrayList<>();
+        if (list.size() > 0) {
+            int currentIndex = 0;
+            int currentKey = 0;
 
+            int currentNewsSize = list.size();
+            Log.e(TAG, String.valueOf(list.size()));
+//            int[] keys = {2, 3, 2, 3, 1, 2, 3, 2, 3, 2, 1};
+            List<Integer> keys = new ArrayList<>();
 
-        int currentIndex = 0;
-        int currentKey = 0;
-
-        int currentNewsSize = list.size();
-        int[] keys = {2, 3, 2, 3, 1, 2, 3, 2, 3, 2, 1};
-
-        NewsCluster nc;
-        nc = new NewsCluster();
-        nc.getItems().add(list.get(0));
-        cluster.add(nc);
-        currentIndex++;
-        do {
-            nc = new NewsCluster();
-            for (int i = 0; i < keys[currentKey]; i++) {
-                try {
-                    nc.getItems().add(list.get(currentIndex));
-                    if (!cluster.contains(nc)) {
-                        cluster.add(nc);
-                    }
-                } catch (Exception e) {
-//                    Log.e(Common.class.getSimpleName(), e.getMessage());
-                }
-                currentIndex++;
-                currentNewsSize--;
+            for (int i = 0; i < list.size(); i++) {
+                keys.add(AndroidUtilities.randInt(1, 3));
             }
-            currentKey++;
-        } while (currentIndex > 0 && currentIndex < list.size() && currentNewsSize > 0);
+
+            NewsCluster nc;
+            nc = new NewsCluster();
+            nc.getItems().add(list.get(0));
+            cluster.add(nc);
+            currentIndex++;
+            do {
+                nc = new NewsCluster();
+                for (int i = 0; i < keys.get(currentKey); i++) {
+                    try {
+                        nc.getItems().add(list.get(currentIndex));
+                        if (!cluster.contains(nc)) {
+                            cluster.add(nc);
+                        }
+                    } catch (Exception e) {
+                        Log.e(Common.class.getSimpleName(), e.getMessage());
+                    }
+                    currentIndex++;
+                    currentNewsSize--;
+                }
+                currentKey++;
+            } while (currentIndex > 0 && currentIndex < list.size() && currentNewsSize > 0);
+        }
 
         return cluster;
     }
 
-    public static List<NewsCluster> getNewsCluster(Realm realm) {
-        List<Post> p = realm.where(Post.class).findAll();
-        Log.e("COUNT", String.valueOf(p.size()));
-        final List<NewsItem> items = getDemoNews(p);
-
-        return getNewsCluster(items);
-    }
-
-    public static TdmComponent getTDMComponent() {
+    public static TdmComponent getTDMComponent () {
         return mTDMComponent;
     }
 
-    /**
-     * Gets the default {@link Tracker} for this {@link Application}.
-     *
-     * @return tracker
-     */
-    synchronized public Tracker getDefaultTracker() {
-        if (mTracker == null) {
-            GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
-            // To enable debug logging use: adb shell setprop log.tag.GAv4 DEBUG
-            mTracker = analytics.newTracker(R.xml.global_tracker);
-            mTracker.enableAdvertisingIdCollection(true);
-        }
-        return mTracker;
+    public static List<NewsCluster> getPostsCluster (List<Post> posts) {
+        final List<NewsItem> items = getDemoNews(posts);
+        return getNewsCluster(items);
     }
 
     @Override
-    public void onCreate() {
+    public void onCreate () {
         super.onCreate();
 
         applicationContext = getApplicationContext();
@@ -176,7 +173,22 @@ public class Common extends Application {
 
     }
 
-    public NetComponent getNetComponent() {
+    /**
+     * Gets the default {@link Tracker} for this {@link Application}.
+     *
+     * @return tracker
+     */
+    synchronized public Tracker getDefaultTracker () {
+        if (mTracker == null) {
+            GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
+            // To enable debug logging use: adb shell setprop log.tag.GAv4 DEBUG
+            mTracker = analytics.newTracker(R.xml.global_tracker);
+            mTracker.enableAdvertisingIdCollection(true);
+        }
+        return mTracker;
+    }
+
+    public NetComponent getNetComponent () {
         return mNetComponent;
     }
 }
