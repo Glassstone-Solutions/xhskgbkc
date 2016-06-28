@@ -28,10 +28,10 @@ import net.glassstones.thediarymagazine.models.NewsCluster;
 import net.glassstones.thediarymagazine.models.NewsItem;
 import net.glassstones.thediarymagazine.models.Post;
 import net.glassstones.thediarymagazine.receivers.DeepLinkReceiver;
-import net.glassstones.thediarymagazine.utils.AndroidUtilities;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
@@ -91,7 +91,8 @@ public class Common extends Application {
             List<Integer> keys = new ArrayList<>();
 
             for (int i = 0; i < list.size(); i++) {
-                keys.add(AndroidUtilities.randInt(1, 3));
+                Random rand = new Random();
+                keys.add(rand.nextInt(3) + 1);
             }
 
             NewsCluster nc;
