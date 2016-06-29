@@ -11,6 +11,7 @@ import io.realm.annotations.PrimaryKey;
 public class Post extends RealmObject {
 
     public static final String ID = "id";
+    public static final String TITLE = "title";
     public static String IMAGE_SAVED = "mediaSaved";
     public static String CREATED_AT = "created_at";
 

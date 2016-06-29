@@ -1,14 +1,12 @@
 package net.glassstones.thediarymagazine.ui.activities;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.CoordinatorLayout;
@@ -16,19 +14,15 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.NavUtils;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.graphics.Palette;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.text.Html;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
-import android.webkit.JavascriptInterface;
-import android.webkit.WebSettings;
-import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
 import com.bumptech.glide.Glide;
@@ -39,14 +33,19 @@ import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.interfaces.network.TDMAPIClient;
 import net.glassstones.thediarymagazine.models.NI;
+import net.glassstones.thediarymagazine.models.News;
 import net.glassstones.thediarymagazine.models.Post;
 import net.glassstones.thediarymagazine.models.WPMedia;
 import net.glassstones.thediarymagazine.network.ServiceGenerator;
-import net.glassstones.thediarymagazine.ui.widgets.CustomTextView;
-import net.glassstones.thediarymagazine.ui.widgets.NestedWebView;
+import net.glassstones.thediarymagazine.ui.adapters.NewsDetailAdapter;
 import net.glassstones.thediarymagazine.ui.widgets.TopAlignedImageView;
 import net.glassstones.thediarymagazine.utils.RealmUtils;
 import net.glassstones.thediarymagazine.utils.UIUtils;
+
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.ByteArrayOutputStream;
 import java.text.ParseException;
@@ -74,18 +73,9 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
     CollapsingToolbarLayout collapsingToolbar;
     @InjectView(R.id.appbar)
     AppBarLayout appbar;
-    @InjectView(R.id.web_view)
-    NestedWebView webView;
+    //    @InjectView(R.id.web_view)
+//    NestedWebView webView;
     ServiceGenerator sg;
-    @InjectView(R.id.title)
-    CustomTextView title;
-    @InjectView(R.id.title_wrap)
-    LinearLayout titleWrap;
-
-    @InjectView(R.id.source)
-    CustomTextView source;
-    @InjectView(R.id.timestamp)
-    CustomTextView timestamp;
 
     TDMAPIClient client;
 
@@ -93,6 +83,8 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
     Post post;
     Realm realm;
     RealmUtils realmUtils;
+    @InjectView(R.id.news)
+    RecyclerView newsView;
 
     @Override
     public Class clazz () {
@@ -185,15 +177,24 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
 
         post = body;
 
-        title.setText(Html.fromHtml(post.getTitle()));
+        Document t = Jsoup.parse(post.getContent());
+
+        Element b = t.getElementsByClass("td-header-wrap").first();
+
+        Elements elements = t.select("p");
+
+        News news = null;
 
         try {
-            String date = UIUtils.getTimeAgo(post.getCreated_at());
-            timestamp.setText(date);
+            news = new News().title(post.getTitle()).date(UIUtils.getTimeAgo(post.getCreated_at
+                    ())).firstParagraph(b).otherParagraphs(elements);
         } catch (ParseException e) {
-            timestamp.setVisibility(View.GONE);
             e.printStackTrace();
         }
+        NewsDetailAdapter adapter = new NewsDetailAdapter(this, news);
+
+        newsView.setLayoutManager(new LinearLayoutManager(this));
+        newsView.setAdapter(adapter);
 
         if (!post.isMediaSaved()) {
             Call<WPMedia> media = client.getMedia(body.getFeatured_media());
@@ -239,7 +240,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
             });
         }
 
-        setupWebView(webView, body);
+//        setupWebView(webView, body);
     }
 
     private void handleFailure (Throwable t) {
@@ -257,45 +258,12 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
         header.setImageBitmap(image);
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
-    private void setupWebView (NestedWebView webView, Post post) {
-        webView.addJavascriptInterface(new WebAppInterface(this), "Android");
-        webView.setScrollbarFadingEnabled(true);
-        WebSettings settings = webView.getSettings();
-        settings.setSupportZoom(false);
-        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
-        settings.setJavaScriptEnabled(true);
-        String sb = getPostString(post);
-        webView.loadDataWithBaseURL("file:///android_asset/", sb, "text/html", "utf-8", null);
-    }
-
     private void changeStatusBar (int statusBarColor) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
             window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
             window.setStatusBarColor(statusBarColor);
         }
-    }
-
-    @NonNull
-    private String getPostString (Post post) {
-        return String.format("<!DOCTYPE html><HTML lang=\"en\">" +
-                "<HEAD>" +
-                "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css\"" +
-                "integrity=\"sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7\" crossorigin=\"anonymous\">" +
-                "<style type=\"text/css\">html{background-color:#fff}.pvc_stats{display:none}p:first-child{margin-top:16px;font-weight:700;font-size:18px}</style>" +
-                "</HEAD>" +
-                "<body class=\"container\">" +
-                "%s" +
-                "<script type=\"text/javascript\" src=\"https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0/jquery.min.js\"></script>\n" +
-                "<script type=\"text/javascript\">\n" +
-                "$(\"img\").removeClass();\n" +
-                "$(\"img\").removeAttr(\"sizes\");\n" +
-                "$(\"img\").removeAttr(\"srcset\");\n" +
-                "$(\"img\").removeAttr(\"width\");\n" +
-                "$(\"img\").removeAttr(\"height\");\n" +
-                "$(\"img\").addClass(\"img-responsive\");\n" +
-                "</script></body></HTML>", post.getContent());
     }
 
     @Override
@@ -344,24 +312,6 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
 
     @Override
     public void postSaveFailed (Post post, Throwable t) {
-
-    }
-
-    private class WebAppInterface {
-
-        Context mContext;
-
-        public WebAppInterface (Context context) {
-            this.mContext = context;
-        }
-
-        /**
-         * Show a toast from the web page
-         */
-        @JavascriptInterface
-        public void showToast (String toast) {
-            Toast.makeText(mContext, toast, Toast.LENGTH_SHORT).show();
-        }
 
     }
 }

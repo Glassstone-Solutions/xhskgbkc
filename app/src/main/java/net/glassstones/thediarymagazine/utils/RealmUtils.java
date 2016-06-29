@@ -102,6 +102,13 @@ public class RealmUtils {
     public Post NI2Post (NI ni, byte[] media) {
         Post p = new Post();
 
+        List<Post> posts = mRealm.where(Post.class).equalTo(Post.ID, ni.getId()).equalTo(Post
+                .TITLE, ni.getTitle().getTitle()).findAll();
+
+        if (posts.size() > 0) {
+            return null;
+        }
+
         mRealm.beginTransaction();
         p.setId(ni.getId());
         p.setTitle(ni.getTitle().getTitle());

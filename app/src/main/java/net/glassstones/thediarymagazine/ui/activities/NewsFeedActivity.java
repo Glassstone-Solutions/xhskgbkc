@@ -78,30 +78,47 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
             R.drawable.shopping_basket_unselected
     };
 
-    private void constructFetchJob() {
-        PersistableBundle bundle = new PersistableBundle();
-        JobInfo.Builder builder = new JobInfo.Builder(FETCH_JOB_ID,
-                new ComponentName(this, UpdateLocalPostsService.class));
-        builder.setPeriodic(3600000)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setExtras(bundle)
-                .setPersisted(true);
-        jobScheduler.schedule(builder.build());
-    }
-
-    private void constructImageFetchJob() {
-        PersistableBundle bundle = new PersistableBundle();
-        JobInfo.Builder builder = new JobInfo.Builder(FETCH_IMAGE_JOB_ID,
-                new ComponentName(this, UpdateLocalPostsImageService.class));
-        builder.setPeriodic(300000)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setExtras(bundle)
-                .setPersisted(true);
-        jobScheduler.schedule(builder.build());
+    @Override
+    protected void onDestroy () {
+        super.onDestroy();
+        if (realmUtils != null) {
+            realmUtils.closeRealm();
+        }
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public boolean onCreateOptionsMenu (Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_news_feed, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected (MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_settings) {
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public Class clazz () {
+        return this.getClass();
+    }
+
+    @Override
+    public int resourceId () {
+        return R.layout.activity_news_feed;
+    }
+
+    @Override
+    protected void onCreate (Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.colorPrimaryDark));
@@ -128,7 +145,7 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
             }
             avocarrotCustom.setListener(new AvocarrotCustomListener() {
                 @Override
-                public void onAdLoaded(List<CustomModel> ads) {
+                public void onAdLoaded (List<CustomModel> ads) {
                     super.onAdLoaded(ads);
                     super.onAdLoaded(ads);
                     if ((ads == null) || (ads.size() < 1)) {
@@ -137,17 +154,17 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
                 }
 
                 @Override
-                public void onAdError(AdError error) {
+                public void onAdError (AdError error) {
                     super.onAdError(error);
                 }
 
                 @Override
-                public void onAdClicked() {
+                public void onAdClicked () {
                     super.onAdClicked();
                 }
 
                 @Override
-                public void onAdImpression() {
+                public void onAdImpression () {
                     super.onAdImpression();
                 }
             });
@@ -169,20 +186,12 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
         }
     }
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (realmUtils != null) {
-            realmUtils.closeRealm();
-        }
-    }
-
-    private void doSplash() {
+    private void doSplash () {
         startActivity(new Intent(this, LoginActivity.class));
         finish();
     }
 
-    private void init() {
+    private void init () {
 
         Intent intent = getIntent();
         if (intent.getBooleanExtra(DeepLink.IS_DEEP_LINK, false)) {
@@ -197,43 +206,48 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
         mTabLayout.setupWithViewPager(mPager);
         mTabLayout.setOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
-            public void onTabSelected(TabLayout.Tab tab) {
+            public void onTabSelected (TabLayout.Tab tab) {
                 int p = tab.getPosition();
                 setTabSelectedIcon(p, tab, mPager);
             }
 
             @Override
-            public void onTabUnselected(TabLayout.Tab tab) {
+            public void onTabUnselected (TabLayout.Tab tab) {
                 int p = tab.getPosition();
                 setTabUnSelectedIcon(p, tab);
             }
 
             @Override
-            public void onTabReselected(TabLayout.Tab tab) {
+            public void onTabReselected (TabLayout.Tab tab) {
 
             }
         });
         setupTabIcons();
     }
 
-    private void setTabUnSelectedIcon(int p, TabLayout.Tab tab) {
-        tab.setIcon(defaultTabIcons[p]);
+    private void constructFetchJob () {
+        PersistableBundle bundle = new PersistableBundle();
+        JobInfo.Builder builder = new JobInfo.Builder(FETCH_JOB_ID,
+                new ComponentName(this, UpdateLocalPostsService.class));
+        builder.setPeriodic(3600000)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setExtras(bundle)
+                .setPersisted(true);
+        jobScheduler.schedule(builder.build());
     }
 
-    private void setTabSelectedIcon(int p, TabLayout.Tab tab, ViewPager mPager) {
-        tab.setIcon(tabIcons[p]);
-        mPager.setCurrentItem(p, true);
+    private void constructImageFetchJob () {
+        PersistableBundle bundle = new PersistableBundle();
+        JobInfo.Builder builder = new JobInfo.Builder(FETCH_IMAGE_JOB_ID,
+                new ComponentName(this, UpdateLocalPostsImageService.class));
+        builder.setPeriodic(300000)
+                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                .setExtras(bundle)
+                .setPersisted(true);
+        jobScheduler.schedule(builder.build());
     }
 
-    private void setupTabIcons() {
-        mTabLayout.getTabAt(0).setIcon(tabIcons[0]);
-        mTabLayout.getTabAt(1).setIcon(defaultTabIcons[1]);
-        mTabLayout.getTabAt(2).setIcon(defaultTabIcons[2]);
-        mTabLayout.getTabAt(3).setIcon(defaultTabIcons[3]);
-        mTabLayout.getTabAt(4).setIcon(defaultTabIcons[4]);
-    }
-
-    private void setupViewPager(ViewPager mPager) {
+    private void setupViewPager (ViewPager mPager) {
         MyFragmentAdapter adapter = new MyFragmentAdapter(getSupportFragmentManager());
         adapter.addFrag(new NewsFragment());
 //        adapter.addFrag(UnderConstructionFragment.newInstance(defaultTabIcons[2], "Search"));
@@ -244,39 +258,25 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
         mPager.setAdapter(adapter);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_news_feed, menu);
-        return true;
+    private void setTabSelectedIcon (int p, TabLayout.Tab tab, ViewPager mPager) {
+        tab.setIcon(tabIcons[p]);
+        mPager.setCurrentItem(p, true);
+    }
+
+    private void setTabUnSelectedIcon (int p, TabLayout.Tab tab) {
+        tab.setIcon(defaultTabIcons[p]);
+    }
+
+    private void setupTabIcons () {
+        mTabLayout.getTabAt(0).setIcon(tabIcons[0]);
+        mTabLayout.getTabAt(1).setIcon(defaultTabIcons[1]);
+        mTabLayout.getTabAt(2).setIcon(defaultTabIcons[2]);
+        mTabLayout.getTabAt(3).setIcon(defaultTabIcons[3]);
+        mTabLayout.getTabAt(4).setIcon(defaultTabIcons[4]);
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    public Class clazz() {
-        return this.getClass();
-    }
-
-    @Override
-    public int resourceId() {
-        return R.layout.activity_news_feed;
-    }
-
-    @Override
-    public void realmChange(Post post) {
+    public void realmChange (Post post) {
         EventBus.getDefault().post(new PostEvent()
                 .id(post.getId())
                 .type(PostEvent.SINGLE_POST)
@@ -285,7 +285,7 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
     }
 
     @Override
-    public void realmChange(List<NI> p) {
+    public void realmChange (List<NI> p) {
         for (NI pos : p) {
             Post post = realmUtils.getPost(Post.ID, pos.getId());
             realmUtils.updatePost(pos, post);
@@ -293,23 +293,25 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
     }
 
     @Override
-    public void postSaveFailed(Post post, Throwable t) {
+    public void postSaveFailed (Post post, Throwable t) {
 
     }
 
     @Override
-    public void onPostResponse(Response<ArrayList<NI>> response) {
+    public void onPostResponse (Response<ArrayList<NI>> response) {
         List<NI> posts = response.body();
-        Log.e(TAG, String.valueOf(posts));
         List<Post> rPosts = new ArrayList<>();
         for (NI p : posts) {
-            rPosts.add(realmUtils.NI2Post(p, null));
+            Post post = realmUtils.NI2Post(p, null);
+            if (post != null) {
+                rPosts.add(post);
+            }
         }
         realmUtils.savePosts(posts, rPosts);
     }
 
     @Override
-    public void onPostRequestFailure(Throwable t) {
-        Log.e(TAG, t.getMessage());
+    public void onPostRequestFailure (Throwable t) {
+        Log.e(TAG, t.getMessage() + "");
     }
 }

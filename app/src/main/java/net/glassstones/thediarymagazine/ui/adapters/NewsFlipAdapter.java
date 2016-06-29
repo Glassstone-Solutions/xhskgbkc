@@ -414,6 +414,7 @@ public class NewsFlipAdapter extends BaseAdapter {
     }
 
     public void update(List<NewsCluster> clusters) {
+        items.clear();
         items = clusters;
         notifyDataSetChanged();
     }

@@ -56,6 +56,7 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
             // Repeat this the same runnable code block again another 2 seconds
             if (clusters.size() == 0) {
                 Log.d("Handlers", "Called on main thread");
+                clusters = Common.getNewsCluster(realm);
                 mAdapter.update(Common.getNewsCluster(realm));
             }
             handler.postDelayed(runnableCode, 2000);
@@ -139,6 +140,7 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     public void onViewCreated (View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         if (realm.where(Post.class).count() > 0) {
+            Log.e(TAG, String.valueOf(realm.where(Post.class).count()));
             clusters = Common.getNewsCluster(realm);
         } else {
             clusters = new ArrayList<>();
