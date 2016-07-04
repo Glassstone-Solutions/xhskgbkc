@@ -1,24 +1,21 @@
 package net.glassstones.thediarymagazine.ui.activities;
 
 import android.os.Bundle;
+import android.support.design.widget.AppBarLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
-import android.view.View;
+import android.support.v7.widget.Toolbar;
 import android.widget.ProgressBar;
-
-import com.squareup.okhttp.ResponseBody;
 
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
-import net.glassstones.thediarymagazine.interfaces.Callback;
-import net.glassstones.thediarymagazine.interfaces.network.TDMAPIClient;
-import net.glassstones.thediarymagazine.models.NI;
-import net.glassstones.thediarymagazine.models.NewsCluster;
-import net.glassstones.thediarymagazine.models.NewsItem;
-import net.glassstones.thediarymagazine.models.Post;
+import net.glassstones.thediarymagazine.network.Callback;
 import net.glassstones.thediarymagazine.network.ServiceGenerator;
-import net.glassstones.thediarymagazine.tasks.GetPostsByCategory;
+import net.glassstones.thediarymagazine.network.TDMAPIClient;
+import net.glassstones.thediarymagazine.network.models.NI;
+import net.glassstones.thediarymagazine.network.models.NewsCluster;
+import net.glassstones.thediarymagazine.network.models.NewsItem;
 import net.glassstones.thediarymagazine.ui.adapters.NewsFlipAdapter;
+import net.glassstones.thediarymagazine.utils.RealmUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,12 +23,16 @@ import java.util.List;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import io.realm.Realm;
-import io.realm.Sort;
-import retrofit.Call;
+import rx.Observable;
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 import se.emilsjolander.flipview.FlipView;
 import se.emilsjolander.flipview.OverFlipMode;
 
-public class CategoryActivity extends AppCompatActivity implements Callback, FlipView.OnFlipListener, FlipView.OnOverFlipListener, GetPostsByCategory.GetPostsByCategoryInterface {
+public class CategoryActivity extends AppCompatActivity implements
+        FlipView.OnFlipListener,
+        FlipView.OnOverFlipListener, Callback {
 
     private static final String TAG = CategoryActivity.class.getSimpleName();
     @InjectView(R.id.progress)
@@ -41,7 +42,12 @@ public class CategoryActivity extends AppCompatActivity implements Callback, Fli
     NewsFlipAdapter mAdapter;
     int skip = 1;
     TDMAPIClient client;
-    private GetPostsByCategory task;
+    @InjectView(R.id.toolbar)
+    Toolbar toolbar;
+    @InjectView(R.id.appbar)
+    AppBarLayout appbar;
+
+    private Subscription postsSubscription;
 
     @Override
     protected void onCreate (Bundle savedInstanceState) {
@@ -49,17 +55,19 @@ public class CategoryActivity extends AppCompatActivity implements Callback, Fli
         setContentView(R.layout.activity_category);
         ButterKnife.inject(this);
 
-        progress.setIndeterminate(true);
-        progress.setVisibility(View.VISIBLE);
+        setSupportActionBar(toolbar);
+
+        assert getSupportActionBar() != null;
+
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         int category = getIntent().getIntExtra("cat", -1);
 
-        List<Post> posts = Realm.getDefaultInstance()
-                .where(Post.class)
-                .equalTo("categories.id", category)
-                .equalTo("categories.isTitleSaved", true)
-                .findAllSorted(Post.CREATED_AT, Sort.DESCENDING);
-        List<NewsCluster> cluster = Common.getPostsCluster(posts);
+//        mAdapter = new CategoryAdapter(this);
+
+        List<NewsCluster> cluster = Common.getNewsCluster(Realm.getDefaultInstance(), category);
+
         mAdapter = new NewsFlipAdapter(this, cluster);
         mAdapter.setCallback(this);
         list.setAdapter(mAdapter);
@@ -71,25 +79,34 @@ public class CategoryActivity extends AppCompatActivity implements Callback, Fli
 
         client = sg.createService(TDMAPIClient.class);
 
-        Call<ArrayList<NI>> call = client.getPostsByCategory(category, 25, skip);
+        List<NI> rPosts = new ArrayList<>();
 
-        task = new GetPostsByCategory(call);
-        task.setListeners(this);
-        task.execute();
+        Observable<ArrayList<NI>> postsObserver = client.getPostsObservableByCategory(category,
+                25, skip);
+
+        postsSubscription = postsObserver
+                .flatMap(Observable::from)
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(ni -> {
+                    RealmUtils utils = new RealmUtils(Realm.getDefaultInstance());
+                    utils.NI2Post(ni, null);
+                })
+                .subscribe();
+    }
+
+    @Override
+    protected void onStop () {
+        super.onStop();
+        postsSubscription.unsubscribe();
     }
 
     @Override
     protected void onDestroy () {
         super.onDestroy();
-        if (task != null) {
-            task.closeRealm();
-        }
+        ButterKnife.reset(this);
     }
 
-    @Override
-    public void onPageRequested (NewsItem newsItem) {
-
-    }
 
     @Override
     public void onFlippedToPage (FlipView v, int position, long id) {
@@ -102,17 +119,7 @@ public class CategoryActivity extends AppCompatActivity implements Callback, Fli
     }
 
     @Override
-    public void getPosts (List<Post> posts) {
-        Log.e(TAG, String.valueOf(posts.size()));
-    }
-
-    @Override
-    public void callFailed (Throwable t) {
-
-    }
-
-    @Override
-    public void responseFailed (ResponseBody responseBody) {
+    public void onPageRequested (NewsItem newsItem) {
 
     }
 }

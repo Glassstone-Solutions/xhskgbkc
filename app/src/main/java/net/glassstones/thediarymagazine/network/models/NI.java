@@ -1,11 +1,8 @@
-package net.glassstones.thediarymagazine.models;
+package net.glassstones.thediarymagazine.network.models;
 
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
-
-import io.realm.RealmObject;
-import io.realm.annotations.PrimaryKey;
 
 /**
  * Created by Thompson on 08/06/2016.

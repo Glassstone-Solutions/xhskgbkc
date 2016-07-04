@@ -22,12 +22,12 @@ import com.google.android.gms.analytics.Tracker;
 
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
-import net.glassstones.thediarymagazine.interfaces.Callback;
-import net.glassstones.thediarymagazine.interfaces.network.TDMAPIClient;
-import net.glassstones.thediarymagazine.models.NewsCluster;
-import net.glassstones.thediarymagazine.models.NewsItem;
-import net.glassstones.thediarymagazine.models.WPMedia;
+import net.glassstones.thediarymagazine.network.Callback;
 import net.glassstones.thediarymagazine.network.ServiceGenerator;
+import net.glassstones.thediarymagazine.network.TDMAPIClient;
+import net.glassstones.thediarymagazine.network.models.NewsCluster;
+import net.glassstones.thediarymagazine.network.models.NewsItem;
+import net.glassstones.thediarymagazine.network.models.WPMedia;
 import net.glassstones.thediarymagazine.ui.widgets.CustomTextView;
 import net.glassstones.thediarymagazine.ui.widgets.TopAlignedImageView;
 
@@ -36,9 +36,8 @@ import java.util.List;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.InjectViews;
-import retrofit.Call;
-import retrofit.Response;
-import retrofit.Retrofit;
+import retrofit2.Call;
+import retrofit2.Response;
 
 /**
  * Created by Thompson on 17/02/2016.
@@ -59,23 +58,7 @@ public class NewsFlipAdapter extends BaseAdapter {
     private TDMAPIClient client;
     private Tracker mTracker;
 
-    private View.OnClickListener listener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            NewsItem item = (NewsItem) v.getTag();
-            if (item != null && callback != null) {
-                callback.onPageRequested(item);
-                mTracker.send(new HitBuilders.EventBuilder()
-                        .setCategory("Action")
-                        .setAction("Read_Post")
-                        .build());
-            }
-        }
-    };
-
-    public NewsFlipAdapter(Context c, List<NewsCluster> i) {
-        this.context = c;
-        this.items = i;
+    private void init () {
         inflater = LayoutInflater.from(context);
 
         ServiceGenerator sg = new ServiceGenerator((Common) context.getApplicationContext());
@@ -83,60 +66,35 @@ public class NewsFlipAdapter extends BaseAdapter {
         client = sg.createService(TDMAPIClient.class);
 
         mTracker = ((Common) context.getApplicationContext()).getDefaultTracker();
-
     }
 
-    public void setCallback(Callback callback) {
+    public NewsFlipAdapter (Context c, List<NewsCluster> i) {
+        this.context = c;
+        this.items = i;
+        init();
+    }
+
+    public void setCallback (Callback callback) {
         this.callback = callback;
     }
 
     @Override
-    public int getCount() {
+    public int getCount () {
         return items.size();
     }
 
     @Override
-    public Object getItem(int position) {
+    public Object getItem (int position) {
         return position;
     }
 
     @Override
-    public long getItemId(int position) {
+    public long getItemId (int position) {
         return position;
     }
 
     @Override
-    public boolean hasStableIds() {
-        return true;
-    }
-
-    @Override
-    public int getItemViewType(int position) {
-        int itemType;
-        switch (items.get(position).getItems().size()) {
-            case 1:
-                itemType = TYPE_HEADLINE;
-                break;
-            case 2:
-                itemType = TYPE_MAIN_1;
-                break;
-            case 3:
-                itemType = TYPE_MAIN_2;
-                break;
-            default:
-                itemType = TYPE_ERROR;
-                break;
-        }
-        return itemType;
-    }
-
-    @Override
-    public int getViewTypeCount() {
-        return 4;
-    }
-
-    @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView (int position, View convertView, ViewGroup parent) {
         View layout = convertView;
         int type = getItemViewType(position);
 //        Log.e("TAG", items.get(position).getItems().get(0).getTitle());
@@ -167,7 +125,7 @@ public class NewsFlipAdapter extends BaseAdapter {
         return layout;
     }
 
-    private void returnView(View convertView, int type) {
+    private void returnView (View convertView, int type) {
         if (TYPE_HEADLINE == type) {
             if (convertView.getTag() instanceof Headline)
                 holder = (Headline) convertView.getTag();
@@ -183,7 +141,7 @@ public class NewsFlipAdapter extends BaseAdapter {
         }
     }
 
-    private void bindView(int position, int type, ViewHolder holder) {
+    private void bindView (int position, int type, ViewHolder holder) {
         if (TYPE_HEADLINE == type) {
             bindHeadline(position, holder);
         } else if (TYPE_MAIN_1 == type) {
@@ -195,7 +153,7 @@ public class NewsFlipAdapter extends BaseAdapter {
         }
     }
 
-    private void bindHeadline(int position, ViewHolder v) {
+    private void bindHeadline (int position, ViewHolder v) {
         if (v instanceof Headline) {
             final NewsItem item = items.get(position).getItems().get(0);
 
@@ -208,11 +166,22 @@ public class NewsFlipAdapter extends BaseAdapter {
             ct.setText(Html.fromHtml(item.getPost().getExcerpt()));
 
             vh.getRoot().setTag(item);
-            vh.getRoot().setOnClickListener(listener);
+            vh.getRoot().setOnClickListener((view -> clickHandler(item, view)));
         }
     }
 
-    private void bind1(int position, ViewHolder v) {
+    private void clickHandler (NewsItem item, View view) {
+        NewsItem i = (NewsItem) view.getTag();
+        if (i != null && callback != null) {
+            callback.onPageRequested(item);
+            mTracker.send(new HitBuilders.EventBuilder()
+                    .setCategory("Action")
+                    .setAction("Read_Post")
+                    .build());
+        }
+    }
+
+    private void bind1 (int position, ViewHolder v) {
         if (v instanceof VH1) {
             VH1 vh = (VH1) v;
             TextView t1, t2;
@@ -240,7 +209,7 @@ public class NewsFlipAdapter extends BaseAdapter {
                     root = vh.getRoot().get(0);
 
                     root.setTag(ni);
-                    root.setOnClickListener(listener);
+                    root.setOnClickListener((view -> clickHandler(ni, view)));
 
                 } else {
                     NewsItem ni = items.get(position).getItems().get(1);
@@ -261,7 +230,7 @@ public class NewsFlipAdapter extends BaseAdapter {
                     root = vh.getRoot().get(1);
 
                     root.setTag(ni);
-                    root.setOnClickListener(listener);
+                    root.setOnClickListener((view -> clickHandler(ni, view)));
 
                 }
             }
@@ -269,7 +238,7 @@ public class NewsFlipAdapter extends BaseAdapter {
         }
     }
 
-    private void bind2(int position, ViewHolder v) {
+    private void bind2 (int position, ViewHolder v) {
         if (v instanceof VH2) {
             VH2 vh = (VH2) v;
 
@@ -296,7 +265,7 @@ public class NewsFlipAdapter extends BaseAdapter {
                     RelativeLayout root = vh.getRoot1();
 
                     root.setTag(ni);
-                    root.setOnClickListener(listener);
+                    root.setOnClickListener((view -> clickHandler(ni, view)));
 
                 } else if (ii == 1) {
                     NewsItem ni = items.get(position).getItems().get(1);
@@ -344,7 +313,7 @@ public class NewsFlipAdapter extends BaseAdapter {
         }
     }
 
-    private void bind3(int position, ViewHolder v) {
+    private void bind3 (int position, ViewHolder v) {
         if (v instanceof VH3) {
             VH3 vh = (VH3) v;
             NewsItem ni = items.get(position).getItems().get(0);
@@ -374,32 +343,31 @@ public class NewsFlipAdapter extends BaseAdapter {
         }
     }
 
-    private void SetTagAndListener(NewsItem ni, LinearLayout root) {
-        root.setTag(ni);
-        root.setOnClickListener(listener);
-    }
-
-    private void setImage(final NewsItem ni, final ImageView i) {
+    private void setImage (final NewsItem ni, final ImageView i) {
         if (!ni.getPost().isMediaSaved()) {
             Call<WPMedia> mediaCall = client.getMedia(ni.getPost().getFeatured_media());
 
-            mediaCall.enqueue(new retrofit.Callback<WPMedia>() {
+            mediaCall.enqueue(new retrofit2.Callback<WPMedia>() {
                 @Override
-                public void onResponse(final Response<WPMedia> response, Retrofit retrofit) {
+                public void onResponse (Call<WPMedia> call, Response<WPMedia> response) {
                     String url = response.body().getSourceUrl();
-                    Glide.with(context)
-                            .load(url != null ? url : "")
-                            .asBitmap()
-                            .into(new SimpleTarget<Bitmap>() {
-                                @Override
-                                public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
-                                    i.setImageBitmap(resource);
-                                }
-                            });
+                    try {
+                        Glide.with(context)
+                                .load(url != null ? url : "")
+                                .asBitmap()
+                                .into(new SimpleTarget<Bitmap>() {
+                                    @Override
+                                    public void onResourceReady (Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                                        i.setImageBitmap(resource);
+                                    }
+                                });
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
 
                 @Override
-                public void onFailure(Throwable t) {
+                public void onFailure (Call<WPMedia> call, Throwable t) {
 
                 }
             });
@@ -409,21 +377,56 @@ public class NewsFlipAdapter extends BaseAdapter {
         }
     }
 
-    private void setTextSize(TextView t, int size) {
+    private void setTextSize (TextView t, int size) {
         t.setTextSize(TypedValue.COMPLEX_UNIT_SP, size);
     }
 
-    public void update(List<NewsCluster> clusters) {
+    private void SetTagAndListener (NewsItem ni, LinearLayout root) {
+        root.setTag(ni);
+        root.setOnClickListener((view -> clickHandler(ni, view)));
+    }
+
+    @Override
+    public boolean hasStableIds () {
+        return true;
+    }
+
+    @Override
+    public int getItemViewType (int position) {
+        int itemType;
+        switch (items.get(position).getItems().size()) {
+            case 1:
+                itemType = TYPE_HEADLINE;
+                break;
+            case 2:
+                itemType = TYPE_MAIN_1;
+                break;
+            case 3:
+                itemType = TYPE_MAIN_2;
+                break;
+            default:
+                itemType = TYPE_ERROR;
+                break;
+        }
+        return itemType;
+    }
+
+    @Override
+    public int getViewTypeCount () {
+        return 4;
+    }
+
+    public void update (List<NewsCluster> clusters) {
         items.clear();
         items = clusters;
         notifyDataSetChanged();
     }
 
-    static class ViewHolder {
+    public static class ViewHolder {
 
     }
 
-    static class Headline extends ViewHolder {
+    public static class Headline extends ViewHolder {
         @InjectView(R.id.splash)
         ImageView mSplash;
         @InjectView(R.id.title)
@@ -433,28 +436,28 @@ public class NewsFlipAdapter extends BaseAdapter {
         @InjectView(R.id.root)
         RelativeLayout root;
 
-        public Headline(View v) {
+        public Headline (View v) {
             ButterKnife.inject(this, v);
         }
 
-        public ImageView getmSplash() {
+        public ImageView getmSplash () {
             return mSplash;
         }
 
-        public TextView getmTitle() {
+        public TextView getmTitle () {
             return mTitle;
         }
 
-        public CustomTextView getExcerpt() {
+        public CustomTextView getExcerpt () {
             return mExcerpt;
         }
 
-        public RelativeLayout getRoot() {
+        public RelativeLayout getRoot () {
             return root;
         }
     }
 
-    static class VH1 extends ViewHolder {
+    public static class VH1 extends ViewHolder {
         @InjectViews({R.id.splash1, R.id.splash2})
         List<TopAlignedImageView> splashes;
         @InjectViews({R.id.title1, R.id.title2})
@@ -464,36 +467,36 @@ public class NewsFlipAdapter extends BaseAdapter {
         @InjectViews({R.id.root1, R.id.root2})
         List<RelativeLayout> root;
 
-        public VH1(View v) {
+        public VH1 (View v) {
             ButterKnife.inject(this, v);
         }
 
-        public TopAlignedImageView getSplash1() {
+        public TopAlignedImageView getSplash1 () {
             return splashes.get(0);
         }
 
-        public TopAlignedImageView getSplash2() {
+        public TopAlignedImageView getSplash2 () {
             return splashes.get(1);
         }
 
-        public TextView getTitle1() {
+        public TextView getTitle1 () {
             return mText.get(0);
         }
 
-        public TextView getTitle2() {
+        public TextView getTitle2 () {
             return mText.get(1);
         }
 
-        public List<CustomTextView> getExcerpts() {
+        public List<CustomTextView> getExcerpts () {
             return excerpts;
         }
 
-        public List<RelativeLayout> getRoot() {
+        public List<RelativeLayout> getRoot () {
             return root;
         }
     }
 
-    static class VH2 extends ViewHolder {
+    public static class VH2 extends ViewHolder {
         @InjectViews({R.id.splash1, R.id.splash2, R.id.splash3})
         List<TopAlignedImageView> splashes;
         @InjectViews({R.id.title1, R.id.title2, R.id.title3})
@@ -507,48 +510,48 @@ public class NewsFlipAdapter extends BaseAdapter {
         @InjectViews({R.id.root2, R.id.root3})
         List<LinearLayout> rootBottom;
 
-        public VH2(View v) {
+        public VH2 (View v) {
             ButterKnife.inject(this, v);
         }
 
-        public List<CustomTextView> getExcerpts() {
+        public List<CustomTextView> getExcerpts () {
             return excerpts;
         }
 
-        public TopAlignedImageView getSplash1() {
+        public TopAlignedImageView getSplash1 () {
             return splashes.get(0);
         }
 
-        public TopAlignedImageView getSplash2() {
+        public TopAlignedImageView getSplash2 () {
             return splashes.get(1);
         }
 
-        public TopAlignedImageView getSplash3() {
+        public TopAlignedImageView getSplash3 () {
             return splashes.get(2);
         }
 
-        public TextView getTitle1() {
+        public TextView getTitle1 () {
             return mText.get(0);
         }
 
-        public TextView getTitle2() {
+        public TextView getTitle2 () {
             return mText.get(1);
         }
 
-        public TextView getTitle3() {
+        public TextView getTitle3 () {
             return mText.get(2);
         }
 
-        public RelativeLayout getRoot1() {
+        public RelativeLayout getRoot1 () {
             return root1;
         }
 
-        public List<LinearLayout> getRootBottom() {
+        public List<LinearLayout> getRootBottom () {
             return rootBottom;
         }
     }
 
-    static class VH3 extends ViewHolder {
+    public static class VH3 extends ViewHolder {
         @InjectView(R.id.root)
         LinearLayout mRoot;
         @InjectView(R.id.splash)
@@ -556,23 +559,23 @@ public class NewsFlipAdapter extends BaseAdapter {
         @InjectViews({R.id.title, R.id.txtBody})
         List<CustomTextView> mText;
 
-        public VH3(View v) {
+        public VH3 (View v) {
             ButterKnife.inject(this, v);
         }
 
-        public TopAlignedImageView getSplash() {
+        public TopAlignedImageView getSplash () {
             return mSplash;
         }
 
-        public CustomTextView getTitle() {
+        public CustomTextView getTitle () {
             return mText.get(0);
         }
 
-        public CustomTextView getBody() {
+        public CustomTextView getBody () {
             return mText.get(1);
         }
 
-        public LinearLayout getmRoot() {
+        public LinearLayout getmRoot () {
             return mRoot;
         }
     }

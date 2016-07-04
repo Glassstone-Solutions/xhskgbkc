@@ -31,11 +31,12 @@ import com.bumptech.glide.request.target.SimpleTarget;
 
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
-import net.glassstones.thediarymagazine.interfaces.network.TDMAPIClient;
-import net.glassstones.thediarymagazine.models.NI;
-import net.glassstones.thediarymagazine.models.News;
-import net.glassstones.thediarymagazine.models.Post;
-import net.glassstones.thediarymagazine.models.WPMedia;
+import net.glassstones.thediarymagazine.common.BaseActivity;
+import net.glassstones.thediarymagazine.network.TDMAPIClient;
+import net.glassstones.thediarymagazine.network.models.NI;
+import net.glassstones.thediarymagazine.network.models.News;
+import net.glassstones.thediarymagazine.network.models.Post;
+import net.glassstones.thediarymagazine.network.models.WPMedia;
 import net.glassstones.thediarymagazine.network.ServiceGenerator;
 import net.glassstones.thediarymagazine.ui.adapters.NewsDetailAdapter;
 import net.glassstones.thediarymagazine.ui.widgets.TopAlignedImageView;
@@ -53,10 +54,9 @@ import java.util.List;
 
 import butterknife.InjectView;
 import io.realm.Realm;
-import retrofit.Call;
-import retrofit.Callback;
-import retrofit.Response;
-import retrofit.Retrofit;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 @DeepLink({"tdm://posts/{id}", "http://www.thediarymagazine.com/{slug}"})
 public class NewsDetailsActivity extends BaseActivity implements RealmUtils.RealmInterface {
@@ -129,8 +129,8 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
                 Call<NI> getPost = client.getPost(Integer.parseInt(idString));
                 getPost.enqueue(new Callback<NI>() {
                     @Override
-                    public void onResponse (Response<NI> response, Retrofit retrofit) {
-                        if (response.isSuccess()) {
+                    public void onResponse (Call<NI> call, Response<NI> response) {
+                        if (response.isSuccessful()) {
                             NI post = response.body();
                             initPost(realmUtils.NI2Post(post, null));
                         } else {
@@ -139,7 +139,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
                     }
 
                     @Override
-                    public void onFailure (Throwable t) {
+                    public void onFailure (Call<NI> call, Throwable t) {
                         handleFailure(t);
                     }
                 });
@@ -148,8 +148,8 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
                 Call<NI> slugPost = client.getPostFromSlug(name);
                 slugPost.enqueue(new Callback<NI>() {
                     @Override
-                    public void onResponse (Response<NI> response, Retrofit retrofit) {
-                        if (response.isSuccess()) {
+                    public void onResponse (Call<NI> call, Response<NI> response) {
+                        if (response.isSuccessful()) {
                             NI post = response.body();
                             initPost(realmUtils.NI2Post(post, null));
                         } else {
@@ -158,7 +158,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
                     }
 
                     @Override
-                    public void onFailure (Throwable t) {
+                    public void onFailure (Call<NI> call, Throwable t) {
                         handleFailure(t);
                     }
                 });
@@ -201,8 +201,8 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
 
             media.enqueue(new Callback<WPMedia>() {
                 @Override
-                public void onResponse (Response<WPMedia> response, Retrofit retrofit) {
-                    if (response.isSuccess()) {
+                public void onResponse (Call<WPMedia> call, Response<WPMedia> response) {
+                    if (response.isSuccessful()) {
                         Glide.with(getApplicationContext())
                                 .load(Uri.parse(response.body().getSourceUrl()))
                                 .asBitmap()
@@ -225,7 +225,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
                 }
 
                 @Override
-                public void onFailure (Throwable t) {
+                public void onFailure (Call<WPMedia> call, Throwable t) {
 
                 }
             });

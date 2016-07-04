@@ -10,7 +10,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import net.glassstones.thediarymagazine.R;
-import net.glassstones.thediarymagazine.models.News;
+import net.glassstones.thediarymagazine.network.models.News;
 import net.glassstones.thediarymagazine.ui.viewholders.DetailsParagraphViewHolder;
 import net.glassstones.thediarymagazine.ui.viewholders.DetailsTitleViewHolder;
 import net.glassstones.thediarymagazine.ui.widgets.CustomTextView;

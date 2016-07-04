@@ -4,17 +4,18 @@ import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import net.glassstones.thediarymagazine.models.Categories;
-import net.glassstones.thediarymagazine.models.NI;
-import net.glassstones.thediarymagazine.models.Post;
-import net.glassstones.thediarymagazine.models.PostEvent;
-import net.glassstones.thediarymagazine.models.WPMedia;
+import net.glassstones.thediarymagazine.network.models.Categories;
+import net.glassstones.thediarymagazine.network.models.NI;
+import net.glassstones.thediarymagazine.network.models.Post;
+import net.glassstones.thediarymagazine.network.models.PostEvent;
+import net.glassstones.thediarymagazine.network.models.WPMedia;
 
 import org.greenrobot.eventbus.EventBus;
 
 import java.util.List;
 
 import io.realm.Realm;
+import io.realm.RealmList;
 import io.realm.Sort;
 
 /**
@@ -41,22 +42,15 @@ public class RealmUtils {
 
     public void savePosts (final List<NI> nis, final List<Post> posts) {
         Log.e("SavePosts", "Saving Posts");
-        mRealm.executeTransactionAsync(new Realm.Transaction() {
-            @Override
-            public void execute (Realm realm) {
-                realm.copyToRealmOrUpdate(posts);
-            }
-        }, new Realm.Transaction.OnSuccess() {
-            @Override
-            public void onSuccess () {
-                EventBus.getDefault().post(new PostEvent()
-                        .id(PostEvent.LIST_CHANGE)
-                        .type(PostEvent.POST_LIST)
-                        .status(PostEvent.SAVED)
-                );
-                Log.e("SavePosts", "Saved Posts");
-                listner.realmChange(nis);
-            }
+        mRealm.executeTransaction(realm -> {
+            realm.copyToRealmOrUpdate(posts);
+            EventBus.getDefault().post(new PostEvent()
+                    .id(PostEvent.LIST_CHANGE)
+                    .type(PostEvent.POST_LIST)
+                    .status(PostEvent.SAVED)
+            );
+            Log.e("SavePosts", "Saved Posts");
+            listner.realmChange(nis);
         });
     }
 
@@ -73,22 +67,9 @@ public class RealmUtils {
     }
 
     public void save (final Post post) {
-        mRealm.executeTransactionAsync(new Realm.Transaction() {
-            @Override
-            public void execute (Realm realm) {
-                realm.copyToRealmOrUpdate(post);
-            }
-        }, new Realm.Transaction.OnSuccess() {
-            @Override
-            public void onSuccess () {
-                listner.realmChange(post);
-            }
-        }, new Realm.Transaction.OnError() {
-            @Override
-            public void onError (Throwable error) {
-                listner.postSaveFailed(post, error);
-            }
-        });
+        mRealm.executeTransactionAsync(realm -> realm.copyToRealmOrUpdate(post),
+                () -> listner.realmChange(post),
+                error -> listner.postSaveFailed(post, error));
     }
 
     public void closeRealm () {
@@ -110,6 +91,17 @@ public class RealmUtils {
         }
 
         mRealm.beginTransaction();
+        RealmList<Categories> categories = new RealmList<>();
+        for (Integer i : ni.getCategories()) {
+            if (mRealm.where(Categories.class).equalTo("id", i).count() < 1) {
+                Categories cat = mRealm.createObject(Categories.class);
+                cat.setId(i);
+                categories.add(cat);
+            } else {
+                Categories cat = mRealm.where(Categories.class).equalTo("id", i).findFirst();
+                categories.add(cat);
+            }
+        }
         p.setId(ni.getId());
         p.setTitle(ni.getTitle().getTitle());
         p.setExcerpt(ni.getExcerpt().getExcerpt());
@@ -131,6 +123,7 @@ public class RealmUtils {
             p.setImageByte(null);
             p.setMediaSaved(false);
         }
+        p.setCategories(categories);
         mRealm.commitTransaction();
 
         return p;

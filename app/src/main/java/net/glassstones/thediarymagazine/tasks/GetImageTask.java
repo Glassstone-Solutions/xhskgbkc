@@ -4,10 +4,10 @@ import android.content.Context;
 import android.util.Log;
 
 import net.glassstones.thediarymagazine.Common;
-import net.glassstones.thediarymagazine.interfaces.network.TDMAPIClient;
-import net.glassstones.thediarymagazine.models.NI;
-import net.glassstones.thediarymagazine.models.Post;
-import net.glassstones.thediarymagazine.models.WPMedia;
+import net.glassstones.thediarymagazine.network.TDMAPIClient;
+import net.glassstones.thediarymagazine.network.models.NI;
+import net.glassstones.thediarymagazine.network.models.Post;
+import net.glassstones.thediarymagazine.network.models.WPMedia;
 import net.glassstones.thediarymagazine.network.ServiceGenerator;
 import net.glassstones.thediarymagazine.utils.RealmUtils;
 
@@ -15,10 +15,9 @@ import java.util.List;
 
 import io.realm.Realm;
 import io.realm.Sort;
-import retrofit.Call;
-import retrofit.Callback;
-import retrofit.Response;
-import retrofit.Retrofit;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by Thompson on 19/06/2016.
@@ -33,10 +32,10 @@ public class GetImageTask implements RealmUtils.RealmInterface {
     ServiceGenerator sg;
     private Context mContext;
 
-    public GetImageTask() {
+    public GetImageTask () {
     }
 
-    public void execute() {
+    public void execute () {
 
         Common app = (Common) mContext.getApplicationContext();
 
@@ -54,8 +53,8 @@ public class GetImageTask implements RealmUtils.RealmInterface {
                 Call<WPMedia> call = client.getMedia(p.getFeatured_media());
                 call.enqueue(new Callback<WPMedia>() {
                     @Override
-                    public void onResponse(Response<WPMedia> response, Retrofit retrofit) {
-                        if (response.isSuccess()) {
+                    public void onResponse (Call<WPMedia> call, Response<WPMedia> response) {
+                        if (response.isSuccessful()) {
                             Log.e("TAG", "Media received");
                             WPMedia media = response.body();
                             realmUtils.saveMedia(media, p);
@@ -63,7 +62,7 @@ public class GetImageTask implements RealmUtils.RealmInterface {
                     }
 
                     @Override
-                    public void onFailure(Throwable t) {
+                    public void onFailure (Call<WPMedia> call, Throwable t) {
 
                     }
                 });
@@ -73,23 +72,23 @@ public class GetImageTask implements RealmUtils.RealmInterface {
         }
     }
 
-    public GetImageTask mContext(Context mContext) {
+    public GetImageTask mContext (Context mContext) {
         this.mContext = mContext;
         return this;
     }
 
     @Override
-    public void realmChange(Post post) {
+    public void realmChange (Post post) {
 
     }
 
     @Override
-    public void realmChange(List<NI> p) {
+    public void realmChange (List<NI> p) {
 
     }
 
     @Override
-    public void postSaveFailed(Post post, Throwable t) {
+    public void postSaveFailed (Post post, Throwable t) {
 
     }
 }

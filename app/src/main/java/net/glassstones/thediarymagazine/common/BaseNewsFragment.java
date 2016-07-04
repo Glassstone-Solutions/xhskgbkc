@@ -1,53 +1,42 @@
-package net.glassstones.thediarymagazine.ui.fragments;
+package net.glassstones.thediarymagazine.common;
 
-import android.content.SharedPreferences;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.util.Log;
 import android.view.View;
 
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 
 import net.glassstones.thediarymagazine.Common;
-import net.glassstones.thediarymagazine.interfaces.network.NetworkOperations;
-import net.glassstones.thediarymagazine.interfaces.network.TDMAPIClient;
-import net.glassstones.thediarymagazine.models.NI;
-import net.glassstones.thediarymagazine.models.NewsCluster;
-import net.glassstones.thediarymagazine.network.Request;
-import net.glassstones.thediarymagazine.network.ServiceGenerator;
+import net.glassstones.thediarymagazine.network.models.NewsCluster;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import javax.inject.Inject;
-
-import retrofit.Call;
-import retrofit.Response;
-import retrofit.Retrofit;
+import butterknife.ButterKnife;
 
 /**
  * Created by Thompson on 08/06/2016.
  * For The Diary Magazine
  */
 public abstract class BaseNewsFragment extends Fragment {
-    @Inject
-    SharedPreferences mSharedPreferences;
-
-    @Inject
-    Retrofit mRetrofit;
-
-    @Inject
-    TDMAPIClient client;
-    String TAG = clazz().getSimpleName();
-    List<NewsCluster> clusters;
+    protected String TAG = clazz().getSimpleName();
+    protected List<NewsCluster> clusters;
 
     public abstract Class clazz();
 
     Tracker mTracker;
 
     Common app;
+
+    protected Context CONTEXT;
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        CONTEXT = context;
+    }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -56,12 +45,31 @@ public abstract class BaseNewsFragment extends Fragment {
         mTracker = app.getDefaultTracker();
         mTracker.setScreenName(TAG);
         mTracker.send(new HitBuilders.ScreenViewBuilder().build());
+    }
 
-        Common.getTDMComponent().inject(this);
+    @Override
+    public void onStart () {
+        super.onStart();
+    }
+
+    @Override
+    public void onStop () {
+        super.onStop();
     }
 
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        bindViews(view);
+    }
+
+    @Override
+    public void onDestroyView () {
+        super.onDestroyView();
+        ButterKnife.reset(this);
+    }
+
+    private void bindViews (View view) {
+        ButterKnife.inject(this, view);
     }
 }

@@ -14,4 +14,6 @@ public class Constants {
     public static final int CATEGORY_WELLBIENG = 37;
 
     public static final int[] CATEGOIRES = {CATEGORY_NEWS, CATEGORY_BUSINESS, CATEGORY_ENTERTAINMENT, CATEGORY_SPORTS, CATEGORY_LIFESTYLE, CATEGORY_WELLBIENG};
+    public static final String BASE_URL = "http://www.thediarymagazine.com  ";
+    public static final String VERSION_PATH = "/v1";
 }

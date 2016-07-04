@@ -1,4 +1,4 @@
-package net.glassstones.thediarymagazine.receivers;
+package net.glassstones.thediarymagazine.common.receivers;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

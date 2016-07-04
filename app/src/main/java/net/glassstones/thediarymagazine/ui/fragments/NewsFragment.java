@@ -13,10 +13,11 @@ import android.view.ViewGroup;
 
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
-import net.glassstones.thediarymagazine.interfaces.Callback;
-import net.glassstones.thediarymagazine.models.NewsItem;
-import net.glassstones.thediarymagazine.models.Post;
-import net.glassstones.thediarymagazine.models.PostEvent;
+import net.glassstones.thediarymagazine.common.BaseNewsFragment;
+import net.glassstones.thediarymagazine.network.Callback;
+import net.glassstones.thediarymagazine.network.models.NewsItem;
+import net.glassstones.thediarymagazine.network.models.Post;
+import net.glassstones.thediarymagazine.network.models.PostEvent;
 import net.glassstones.thediarymagazine.ui.activities.NewsDetailsActivity;
 import net.glassstones.thediarymagazine.ui.adapters.NewsFlipAdapter;
 
@@ -37,7 +38,6 @@ import se.emilsjolander.flipview.OverFlipMode;
  */
 public class NewsFragment extends BaseNewsFragment implements Callback,
         FlipView.OnFlipListener, FlipView.OnOverFlipListener {
-
 
     @InjectView(R.id.list)
     FlipView list;
@@ -95,15 +95,9 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     }
 
     @Override
-    public void onDestroyView () {
-        super.onDestroyView();
-        ButterKnife.reset(this);
-    }
-
-    @Override
     public void onDestroy () {
         super.onDestroy();
-        handler.removeCallbacks(runnableCode);
+//        handler.removeCallbacks(runnableCode);
     }
 
     @Override
@@ -140,13 +134,11 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     public void onViewCreated (View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         if (realm.where(Post.class).count() > 0) {
-            Log.e(TAG, String.valueOf(realm.where(Post.class).count()));
             clusters = Common.getNewsCluster(realm);
         } else {
             clusters = new ArrayList<>();
         }
         mAdapter = new NewsFlipAdapter(getActivity(), clusters);
-        mAdapter.setCallback(this);
         list.setAdapter(mAdapter);
         list.setOnFlipListener(this);
         list.setOnOverFlipListener(this);

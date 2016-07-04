@@ -3,31 +3,21 @@ package net.glassstones.thediarymagazine;
 import android.app.Application;
 import android.content.Context;
 import android.content.IntentFilter;
+import android.support.multidex.MultiDexApplication;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
-import android.view.View;
 
 import com.airbnb.deeplinkdispatch.DeepLinkHandler;
 import com.google.android.gms.analytics.ExceptionReporter;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
-import com.parse.Parse;
-import com.parse.ParseInstallation;
-import com.parse.ParseUser;
 import com.squareup.leakcanary.LeakCanary;
-import com.wang.avi.AVLoadingIndicatorView;
 
-import net.glassstones.thediarymagazine.di.components.DaggerNetComponent;
-import net.glassstones.thediarymagazine.di.components.DaggerTdmComponent;
-import net.glassstones.thediarymagazine.di.components.NetComponent;
-import net.glassstones.thediarymagazine.di.components.TdmComponent;
-import net.glassstones.thediarymagazine.di.modules.AppModule;
-import net.glassstones.thediarymagazine.di.modules.NetModule;
-import net.glassstones.thediarymagazine.di.modules.TdmModule;
-import net.glassstones.thediarymagazine.models.NewsCluster;
-import net.glassstones.thediarymagazine.models.NewsItem;
-import net.glassstones.thediarymagazine.models.Post;
-import net.glassstones.thediarymagazine.receivers.DeepLinkReceiver;
+import net.glassstones.thediarymagazine.common.receivers.DeepLinkReceiver;
+import net.glassstones.thediarymagazine.network.models.NI;
+import net.glassstones.thediarymagazine.network.models.NewsCluster;
+import net.glassstones.thediarymagazine.network.models.NewsItem;
+import net.glassstones.thediarymagazine.network.models.Post;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,31 +25,18 @@ import java.util.Random;
 
 import io.realm.Realm;
 import io.realm.RealmConfiguration;
-import retrofit.Retrofit;
 
 /**
  * Created by Thompson on 04/02/2016.
  * For The Diary Magazine
  */
-public class Common extends Application {
+public class Common extends MultiDexApplication {
 
     public static final String KEY_FIRST_RUN = "first_run";
     private static final String TAG = Common.class.getSimpleName();
 
     public static volatile Context applicationContext;
-    private static TdmComponent mTDMComponent;
-    private static Retrofit retrofit;
-    private static Realm realm;
-    private NetComponent mNetComponent;
     private Tracker mTracker;
-
-    public static void loadingStatus (AVLoadingIndicatorView loadingView, boolean isLoading) {
-        loadingView.setVisibility(isLoading ? View.VISIBLE : View.INVISIBLE);
-    }
-
-    public static Retrofit getRetrofit () {
-        return retrofit;
-    }
 
     public static List<NewsCluster> getNewsCluster (Realm realm) {
         List<Post> p = realm.where(Post.class).findAll();
@@ -74,6 +51,15 @@ public class Common extends Application {
             NewsItem item = new NewsItem();
             item.setPost(posts.get(i));
             list.add(item);
+        }
+        return list;
+    }
+
+    private static List<NewsItem> getNewsList(List<NI> ni){
+        List<NewsItem> list = new ArrayList<>();
+        for (int i = 0; i < ni.size(); i++){
+            NewsItem item = new NewsItem();
+            item.setNi(ni.get(i));
         }
         return list;
     }
@@ -121,12 +107,13 @@ public class Common extends Application {
         return cluster;
     }
 
-    public static TdmComponent getTDMComponent () {
-        return mTDMComponent;
-    }
-
     public static List<NewsCluster> getPostsCluster (List<Post> posts) {
         final List<NewsItem> items = getDemoNews(posts);
+        return getNewsCluster(items);
+    }
+
+    public static List<NewsCluster> getNICluster (List<NI> list){
+        List<NewsItem> items = getNewsList(list);
         return getNewsCluster(items);
     }
 
@@ -135,24 +122,6 @@ public class Common extends Application {
         super.onCreate();
 
         applicationContext = getApplicationContext();
-
-        mNetComponent = DaggerNetComponent.builder()
-                .appModule(new AppModule(this))
-                .netModule(new NetModule("http://www.thediarymagazine.com"))
-                .build();
-        mTDMComponent = DaggerTdmComponent.builder()
-                .netComponent(mNetComponent)
-                .tdmModule(new TdmModule())
-                .build();
-
-        Parse.initialize(new Parse.Configuration.Builder(this)
-                .applicationId("myAppId")
-                .server(Keys.KEY_SERVER)
-                .build());
-        ParseInstallation.getCurrentInstallation().saveInBackground();
-        ParseUser.enableAutomaticUser();
-        ParseUser.getCurrentUser().increment("RunCount");
-        ParseUser.getCurrentUser().saveInBackground();
 
         Thread.UncaughtExceptionHandler myHandler = new ExceptionReporter(
                 this.getDefaultTracker(),
@@ -172,6 +141,12 @@ public class Common extends Application {
 
         Realm.setDefaultConfiguration(config);
 
+        List<Post> posts = Realm.getDefaultInstance().where(Post.class).findAll();
+
+        for (Post p : posts){
+            Log.e(TAG, p.getTitle());
+        }
+
     }
 
     /**
@@ -189,7 +164,14 @@ public class Common extends Application {
         return mTracker;
     }
 
-    public NetComponent getNetComponent () {
-        return mNetComponent;
+    public static Common getApp(Context context) {
+        return (Common) context.getApplicationContext();
+    }
+
+    public static List<NewsCluster> getNewsCluster (Realm realm, int category) {
+        List<Post> p = realm.where(Post.class).equalTo("categories.id", category).findAll();
+        final List<NewsItem> items = getDemoNews(p);
+
+        return getNewsCluster(items);
     }
 }

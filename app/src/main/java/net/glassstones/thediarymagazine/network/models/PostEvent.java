@@ -1,4 +1,4 @@
-package net.glassstones.thediarymagazine.models;
+package net.glassstones.thediarymagazine.network.models;
 
 /**
  * Created by Thompson on 17/06/2016.
@@ -8,6 +8,7 @@ public class PostEvent {
     public static final int LIST_CHANGE = -1;
     public static final int SAVED = 0;
     public static final int POST_LIST = 10;
+    public static final int FETCHING = -20;
 
     public int getType() {
         return type;

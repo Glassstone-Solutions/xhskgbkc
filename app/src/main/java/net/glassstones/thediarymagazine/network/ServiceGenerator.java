@@ -3,13 +3,15 @@ package net.glassstones.thediarymagazine.network;
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.squareup.okhttp.Cache;
-import com.squareup.okhttp.OkHttpClient;
 
 import net.glassstones.thediarymagazine.Common;
 
-import retrofit.GsonConverterFactory;
-import retrofit.Retrofit;
+import okhttp3.Cache;
+import okhttp3.OkHttpClient;
+import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
+import retrofit2.converter.gson.GsonConverterFactory;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by Thompson on 08/06/2016.
@@ -20,11 +22,11 @@ public class ServiceGenerator {
 
     public static final String API_BASE_URL = "http://www.thediarymagazine.com";
 
-    int cacheSize = 10 * 1024 * 1024; // 10 MiB
+    int cacheSize = 20 * 1024 * 1024; // 10 MiB
 
     private Retrofit retrofit;
 
-    public ServiceGenerator(Common mApp) {
+    public ServiceGenerator (Common mApp) {
 
         Cache mCache = createCache(mApp);
 
@@ -35,31 +37,47 @@ public class ServiceGenerator {
         retrofit = createRetrofit(gson, okHttpClient);
     }
 
-    private Retrofit createRetrofit(Gson gson, OkHttpClient okHttpClient) {
-        return new Retrofit.Builder()
-                .addConverterFactory(GsonConverterFactory.create(gson))
-                .baseUrl(API_BASE_URL)
-                .client(okHttpClient)
-                .build();
+    private Cache createCache (Common mApp) {
+        return new Cache(mApp.getCacheDir(), cacheSize);
     }
 
-    private OkHttpClient createClient(Cache cache) {
-        OkHttpClient okHttpClient = new OkHttpClient();
-        okHttpClient.setCache(cache);
-        return okHttpClient;
-    }
-
-    private Gson createGson() {
+    private Gson createGson () {
         GsonBuilder gsonBuilder = new GsonBuilder();
         gsonBuilder.setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES);
         return gsonBuilder.create();
     }
 
-    private Cache createCache(Common mApp) {
-        return new Cache(mApp.getCacheDir(), cacheSize);
+    private OkHttpClient createClient (Cache cache) {
+        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+
+        builder.addInterceptor(chain -> {
+            // Do anything with response here
+            //if we ant to grab a specific cookie or something..
+            return chain.proceed(chain.request());
+        });
+
+        builder.addInterceptor(chain -> {
+            //this is where we will add whatever we want to our request headers.
+            okhttp3.Request request = chain.request().newBuilder().addHeader("Accept",
+                    "application/json").build();
+            return chain.proceed(request);
+        });
+
+        builder.cache(cache);
+        return builder.build();
     }
 
-    public <S> S createService(Class<S> serviceClass){
+    private Retrofit createRetrofit (Gson gson, OkHttpClient okHttpClient) {
+        RxJavaCallAdapterFactory rxAdapter = RxJavaCallAdapterFactory.createWithScheduler(Schedulers.io());
+        return new Retrofit.Builder()
+                .addConverterFactory(GsonConverterFactory.create(gson))
+                .addCallAdapterFactory(rxAdapter)
+                .baseUrl(API_BASE_URL)
+                .client(okHttpClient)
+                .build();
+    }
+
+    public <S> S createService (Class<S> serviceClass) {
         return retrofit.create(serviceClass);
     }
 }

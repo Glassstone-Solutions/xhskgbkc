@@ -14,8 +14,8 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 
 import net.glassstones.thediarymagazine.R;
-import net.glassstones.thediarymagazine.models.NewsCluster;
-import net.glassstones.thediarymagazine.models.NewsItem;
+import net.glassstones.thediarymagazine.network.models.NewsCluster;
+import net.glassstones.thediarymagazine.network.models.NewsItem;
 import net.glassstones.thediarymagazine.ui.viewholders.MainNewsItemHolder;
 import net.glassstones.thediarymagazine.ui.viewholders.VH1;
 import net.glassstones.thediarymagazine.ui.viewholders.VH2;

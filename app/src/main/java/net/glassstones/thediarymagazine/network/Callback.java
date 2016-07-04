@@ -1,6 +1,6 @@
-package net.glassstones.thediarymagazine.interfaces;
+package net.glassstones.thediarymagazine.network;
 
-import net.glassstones.thediarymagazine.models.NewsItem;
+import net.glassstones.thediarymagazine.network.models.NewsItem;
 
 /**
  * Created by Thompson on 21/02/2016.

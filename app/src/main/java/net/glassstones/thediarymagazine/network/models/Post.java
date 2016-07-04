@@ -1,4 +1,4 @@
-package net.glassstones.thediarymagazine.models;
+package net.glassstones.thediarymagazine.network.models;
 
 import io.realm.RealmList;
 import io.realm.RealmObject;

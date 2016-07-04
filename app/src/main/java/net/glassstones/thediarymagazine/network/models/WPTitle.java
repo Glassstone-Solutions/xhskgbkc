@@ -1,4 +1,4 @@
-package net.glassstones.thediarymagazine.models;
+package net.glassstones.thediarymagazine.network.models;
 
 import com.google.gson.annotations.SerializedName;
 

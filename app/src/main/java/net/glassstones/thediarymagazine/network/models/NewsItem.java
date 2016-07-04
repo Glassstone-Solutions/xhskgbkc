@@ -1,4 +1,4 @@
-package net.glassstones.thediarymagazine.models;
+package net.glassstones.thediarymagazine.network.models;
 
 /**
  * Created by Thompson on 11/02/2016.
@@ -8,6 +8,8 @@ public class NewsItem {
     String imageUrl;
 
     Post post;
+
+    NI ni;
 
     public NewsItem() {
     }
@@ -22,5 +24,13 @@ public class NewsItem {
 
     public void setPost(Post post) {
         this.post = post;
+    }
+
+    public NI getNi () {
+        return ni;
+    }
+
+    public void setNi (NI ni) {
+        this.ni = ni;
     }
 }

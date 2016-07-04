@@ -2,20 +2,18 @@ package net.glassstones.thediarymagazine.tasks;
 
 import android.util.Log;
 
-import com.squareup.okhttp.ResponseBody;
-
-import net.glassstones.thediarymagazine.models.NI;
-import net.glassstones.thediarymagazine.models.Post;
+import net.glassstones.thediarymagazine.network.models.NI;
+import net.glassstones.thediarymagazine.network.models.Post;
 import net.glassstones.thediarymagazine.utils.RealmUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import io.realm.Realm;
-import retrofit.Call;
-import retrofit.Callback;
-import retrofit.Response;
-import retrofit.Retrofit;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Created by Thompson on 21/06/2016.
@@ -26,29 +24,34 @@ public class GetPostsByCategory implements RealmUtils.RealmInterface {
     private RealmUtils realmUtils;
     private GetPostsByCategoryInterface listener;
 
-    public GetPostsByCategory(Call<ArrayList<NI>> call) {
+    public GetPostsByCategory (Call<ArrayList<NI>> call) {
         this.mCall = call;
         this.realmUtils = new RealmUtils(Realm.getDefaultInstance(), this);
     }
 
-    public void execute() {
+    public void execute () {
         mCall.enqueue(new Callback<ArrayList<NI>>() {
             @Override
-            public void onResponse(Response<ArrayList<NI>> response, Retrofit retrofit) {
-                if (response.isSuccess()) {
+            public void onResponse (Call<ArrayList<NI>> call, Response<ArrayList<NI>> response) {
+                if (response.isSuccessful()) {
                     final List<NI> posts = response.body();
                     final List<Post> rPosts = new ArrayList<>();
-                    for (NI p : posts) {
-                        Log.e("TAG", ""+p.getTitle().getTitle());
-                        rPosts.add(realmUtils.getPost(Post.ID, p.getId()));
-                    }
                     Realm r = Realm.getDefaultInstance();
-                    r.executeTransaction(new Realm.Transaction() {
-                        @Override
-                        public void execute(Realm realm) {
-                            realm.copyToRealmOrUpdate(rPosts);
-                            realmUtils.savePosts(posts, rPosts);
+                    for (NI p : posts) {
+                        Log.e("TAG", "" + p.getTitle().getTitle());
+                        Post post = r.where(Post.class).equalTo(Post.TITLE, p.getTitle().getTitle
+                                ()).findFirst();
+                        if (post != null) {
+                            rPosts.add(realmUtils.getPost(Post.ID, p.getId()));
+                        } else {
+                            Post posttt = realmUtils.NI2Post(p, null);
+                            rPosts.add(posttt);
                         }
+                    }
+
+                    r.executeTransactionAsync(realm -> {
+                        realm.copyToRealmOrUpdate(rPosts);
+                        realmUtils.savePosts(posts, rPosts);
                     });
                 } else {
                     listener.responseFailed(response.errorBody());
@@ -56,27 +59,27 @@ public class GetPostsByCategory implements RealmUtils.RealmInterface {
             }
 
             @Override
-            public void onFailure(Throwable t) {
+            public void onFailure (Call<ArrayList<NI>> call, Throwable t) {
                 listener.callFailed(t);
             }
         });
     }
 
-    public void closeRealm() {
+    public void closeRealm () {
         realmUtils.closeRealm();
     }
 
-    public void setListeners(GetPostsByCategoryInterface l) {
+    public void setListeners (GetPostsByCategoryInterface l) {
         this.listener = l;
     }
 
     @Override
-    public void realmChange(Post post) {
+    public void realmChange (Post post) {
 
     }
 
     @Override
-    public void realmChange(List<NI> p) {
+    public void realmChange (List<NI> p) {
         List<Post> posts = new ArrayList<>();
         for (NI pos : p) {
             Post post = realmUtils.getPost(Post.ID, pos.getId());
@@ -87,14 +90,16 @@ public class GetPostsByCategory implements RealmUtils.RealmInterface {
     }
 
     @Override
-    public void postSaveFailed(Post post, Throwable t) {
+    public void postSaveFailed (Post post, Throwable t) {
 
     }
 
     public interface GetPostsByCategoryInterface {
-        void getPosts(List<Post> posts);
-        void callFailed(Throwable t);
-        void responseFailed(ResponseBody responseBody);
+        void getPosts (List<Post> posts);
+
+        void callFailed (Throwable t);
+
+        void responseFailed (ResponseBody responseBody);
     }
 
 }

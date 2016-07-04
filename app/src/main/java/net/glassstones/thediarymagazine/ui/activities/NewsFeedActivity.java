@@ -15,16 +15,16 @@ import com.airbnb.deeplinkdispatch.DeepLink;
 import com.avocarrot.androidsdk.AdError;
 import com.avocarrot.androidsdk.AvocarrotCustomListener;
 import com.avocarrot.androidsdk.CustomModel;
-import com.parse.ParseUser;
 
 import net.glassstones.thediarymagazine.BuildConfig;
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
-import net.glassstones.thediarymagazine.interfaces.network.NetworkOperations;
-import net.glassstones.thediarymagazine.interfaces.network.TDMAPIClient;
-import net.glassstones.thediarymagazine.models.NI;
-import net.glassstones.thediarymagazine.models.Post;
-import net.glassstones.thediarymagazine.models.PostEvent;
+import net.glassstones.thediarymagazine.common.BaseActivity;
+import net.glassstones.thediarymagazine.network.NetworkOperations;
+import net.glassstones.thediarymagazine.network.TDMAPIClient;
+import net.glassstones.thediarymagazine.network.models.NI;
+import net.glassstones.thediarymagazine.network.models.Post;
+import net.glassstones.thediarymagazine.network.models.PostEvent;
 import net.glassstones.thediarymagazine.network.Request;
 import net.glassstones.thediarymagazine.network.ServiceGenerator;
 import net.glassstones.thediarymagazine.services.UpdateLocalPostsImageService;
@@ -46,8 +46,8 @@ import io.realm.Realm;
 import me.tatarka.support.job.JobInfo;
 import me.tatarka.support.job.JobScheduler;
 import me.tatarka.support.os.PersistableBundle;
-import retrofit.Call;
-import retrofit.Response;
+import retrofit2.Call;
+import retrofit2.Response;
 
 
 public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmInterface,
@@ -59,7 +59,6 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
     TabLayout mTabLayout;
     @InjectView(R.id.pager)
     ViewPager mPager;
-    ParseUser mCurrentUser;
     Realm realm;
     RealmUtils realmUtils;
     private JobScheduler jobScheduler;
@@ -130,7 +129,6 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
             jobScheduler = JobScheduler.getInstance(this);
             constructFetchJob();
             constructImageFetchJob();
-            mCurrentUser = ParseUser.getCurrentUser();
 
             final com.avocarrot.androidsdk.AvocarrotCustom avocarrotCustom =
                     new com.avocarrot.androidsdk.AvocarrotCustom(

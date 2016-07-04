@@ -1,10 +1,10 @@
-package net.glassstones.thediarymagazine.interfaces.network;
+package net.glassstones.thediarymagazine.network;
 
-import net.glassstones.thediarymagazine.models.NI;
+import net.glassstones.thediarymagazine.network.models.NI;
 
 import java.util.ArrayList;
 
-import retrofit.Response;
+import retrofit2.Response;
 
 /**
  * Created by Thompson on 08/06/2016.

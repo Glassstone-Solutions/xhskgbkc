@@ -1,4 +1,4 @@
-package net.glassstones.thediarymagazine.ui.activities;
+package net.glassstones.thediarymagazine.common;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;

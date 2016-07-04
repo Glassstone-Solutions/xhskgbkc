@@ -1,4 +1,4 @@
-package net.glassstones.thediarymagazine.models;
+package net.glassstones.thediarymagazine.network.models;
 
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
