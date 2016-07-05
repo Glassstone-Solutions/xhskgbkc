@@ -7,7 +7,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.TextView;
+
+import com.bluejamesbond.text.DocumentView;
+import com.bluejamesbond.text.style.TextAlignment;
 
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.network.models.News;
@@ -59,7 +61,7 @@ public class NewsDetailAdapter extends RecyclerView.Adapter {
             LinearLayout root = vh.getRoot();
 
             if (news.getFirstParagraph() != null) {
-                TextView tv1 = getTextPara(news.getFirstParagraph());
+                DocumentView tv1 = getTextPara(news.getFirstParagraph());
                 if (tv1 != null) {
                     tv1.setLayoutParams(new LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -70,7 +72,7 @@ public class NewsDetailAdapter extends RecyclerView.Adapter {
             }
 
             for (Element element : news.getOtherParagraphs()) {
-                TextView tv = getTextPara(element);
+                DocumentView tv = getTextPara(element);
                 if (tv != null) {
                     tv.setLayoutParams(new LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -92,8 +94,9 @@ public class NewsDetailAdapter extends RecyclerView.Adapter {
         timestamp.setText(news.getDate());
     }
 
-    private TextView getTextPara (Element element) {
-        TextView valueTV = new TextView(context);
+    private DocumentView getTextPara (Element element) {
+        DocumentView valueTV = new DocumentView(context, DocumentView.PLAIN_TEXT);
+        valueTV.getDocumentLayoutParams().setTextAlignment(TextAlignment.JUSTIFIED);
         valueTV.setText(String.format("%s\n", element.text()));
         return element.text().isEmpty() ? null : valueTV;
     }
