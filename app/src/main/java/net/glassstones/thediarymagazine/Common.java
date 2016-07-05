@@ -72,7 +72,6 @@ public class Common extends MultiDexApplication {
             int currentKey = 0;
 
             int currentNewsSize = list.size();
-            Log.e(TAG, String.valueOf(list.size()));
 //            int[] keys = {2, 3, 2, 3, 1, 2, 3, 2, 3, 2, 1};
             List<Integer> keys = new ArrayList<>();
 
@@ -140,12 +139,6 @@ public class Common extends MultiDexApplication {
                 .build();
 
         Realm.setDefaultConfiguration(config);
-
-        List<Post> posts = Realm.getDefaultInstance().where(Post.class).findAll();
-
-        for (Post p : posts){
-            Log.e(TAG, p.getTitle());
-        }
 
     }
 

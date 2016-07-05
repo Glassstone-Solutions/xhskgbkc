@@ -30,7 +30,6 @@ public class Post extends RealmObject {
     private String media_type;
     private String mime_type;
     private String source_url;
-    private byte[] image_byte;
     private boolean mediaSaved;
     private RealmList<Categories> categories;
 
@@ -120,14 +119,6 @@ public class Post extends RealmObject {
 
     public void setSource_url(String source_url) {
         this.source_url = source_url;
-    }
-
-    public byte[] getImageByte() {
-        return image_byte;
-    }
-
-    public void setImageByte(byte[] image_byte) {
-        this.image_byte = image_byte;
     }
 
     public int getId() {

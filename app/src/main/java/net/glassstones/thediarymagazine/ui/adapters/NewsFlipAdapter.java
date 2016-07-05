@@ -2,7 +2,6 @@ package net.glassstones.thediarymagazine.ui.adapters;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.text.Html;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -344,6 +343,7 @@ public class NewsFlipAdapter extends BaseAdapter {
     }
 
     private void setImage (final NewsItem ni, final ImageView i) {
+
         if (!ni.getPost().isMediaSaved()) {
             Call<WPMedia> mediaCall = client.getMedia(ni.getPost().getFeatured_media());
 
@@ -372,8 +372,7 @@ public class NewsFlipAdapter extends BaseAdapter {
                 }
             });
         } else {
-            Bitmap b = BitmapFactory.decodeByteArray(ni.getPost().getImageByte(), 0, ni.getPost().getImageByte().length);
-            i.setImageBitmap(b);
+            Glide.with(context).load(ni.getPost().getSource_url()).into(i);
         }
     }
 
@@ -419,6 +418,12 @@ public class NewsFlipAdapter extends BaseAdapter {
     public void update (List<NewsCluster> clusters) {
         items.clear();
         items = clusters;
+        notifyDataSetChanged();
+    }
+
+    public void reset (List<NewsCluster> newsCluster) {
+        items.clear();
+        items = newsCluster;
         notifyDataSetChanged();
     }
 

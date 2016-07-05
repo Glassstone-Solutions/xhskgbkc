@@ -113,14 +113,12 @@ public class RealmUtils {
         p.setAuthorId(ni.getAuthorId());
         p.setFeatured_media(ni.getFeatured_media());
         if (media != null) {
-            p.setImageByte(media);
             p.setMediaSaved(true);
             p.setMediaId(ni.getMedia().getId());
             p.setMedia_type(ni.getMedia().getMedia_type());
             p.setMime_type(ni.getMedia().getMime_type());
             p.setSource_url(ni.getMedia().getSourceUrl());
         } else {
-            p.setImageByte(null);
             p.setMediaSaved(false);
         }
         p.setCategories(categories);
@@ -132,7 +130,6 @@ public class RealmUtils {
     public void updatePostMedia (Post post, byte[] byteArray) {
         if (byteArray != null) {
             mRealm.beginTransaction();
-            post.setImageByte(byteArray);
             post.setMediaSaved(true);
             mRealm.commitTransaction();
         }
@@ -150,20 +147,15 @@ public class RealmUtils {
             @Override
             protected void onPostExecute (final Bitmap bitmap) {
                 super.onPostExecute(bitmap);
-                mRealm.executeTransaction(new Realm.Transaction() {
-                    @Override
-                    public void execute (Realm realm) {
-                        byte[] bytes = BitmapUtils.getByteArray(bitmap);
-                        p.setImageByte(bytes);
-                        p.setMime_type(media.getMime_type());
-                        p.setMedia_type(media.getMedia_type());
-                        p.setMediaId(media.getId());
-                        p.setSource_url(media.getSourceUrl());
-                        p.setMediaSaved(true);
+                mRealm.executeTransaction(realm -> {
+                    p.setMime_type(media.getMime_type());
+                    p.setMedia_type(media.getMedia_type());
+                    p.setMediaId(media.getId());
+                    p.setSource_url(media.getSourceUrl());
+                    p.setMediaSaved(true);
 
-                        listner.realmChange(p);
-                        Log.e("TAG", "Media Saved");
-                    }
+                    listner.realmChange(p);
+                    Log.e("TAG", "Media Saved");
                 });
 
             }
@@ -172,26 +164,13 @@ public class RealmUtils {
 
     public void updatePost (final NI niPost, final Post post) {
         if (post.getCategories().size() == 0 || post.getCategories().size() < post.getCategories().size()) {
-            mRealm.executeTransactionAsync(new Realm.Transaction() {
-                @Override
-                public void execute (Realm realm) {
-                    for (int cat : niPost.getCategories()) {
-                        Categories categories = realm.createObject(Categories.class);
-                        categories.setId(cat);
-                        post.getCategories().add(categories);
-                    }
+            mRealm.executeTransactionAsync(realm -> {
+                for (int cat : niPost.getCategories()) {
+                    Categories categories = realm.createObject(Categories.class);
+                    categories.setId(cat);
+                    post.getCategories().add(categories);
                 }
-            }, new Realm.Transaction.OnSuccess() {
-                @Override
-                public void onSuccess () {
-                    listner.realmChange(post);
-                }
-            }, new Realm.Transaction.OnError() {
-                @Override
-                public void onError (Throwable error) {
-                    listner.postSaveFailed(post, error);
-                }
-            });
+            }, () -> listner.realmChange(post), error -> listner.postSaveFailed(post, error));
         }
     }
 

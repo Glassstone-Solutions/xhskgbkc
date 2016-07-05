@@ -3,7 +3,6 @@ package net.glassstones.thediarymagazine.ui.activities;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -32,12 +31,12 @@ import com.bumptech.glide.request.target.SimpleTarget;
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.common.BaseActivity;
+import net.glassstones.thediarymagazine.network.ServiceGenerator;
 import net.glassstones.thediarymagazine.network.TDMAPIClient;
 import net.glassstones.thediarymagazine.network.models.NI;
 import net.glassstones.thediarymagazine.network.models.News;
 import net.glassstones.thediarymagazine.network.models.Post;
 import net.glassstones.thediarymagazine.network.models.WPMedia;
-import net.glassstones.thediarymagazine.network.ServiceGenerator;
 import net.glassstones.thediarymagazine.ui.adapters.NewsDetailAdapter;
 import net.glassstones.thediarymagazine.ui.widgets.TopAlignedImageView;
 import net.glassstones.thediarymagazine.utils.RealmUtils;
@@ -213,12 +212,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
                                         resource.compress(Bitmap.CompressFormat.JPEG, 100, stream);
                                         byte[] byteArray = stream.toByteArray();
                                         realmUtils.updatePostMedia(post, byteArray);
-                                        Palette.from(resource).generate(new Palette.PaletteAsyncListener() {
-                                            @Override
-                                            public void onGenerated (Palette palette) {
-                                                setupImage(palette, resource);
-                                            }
-                                        });
+                                        Palette.from(resource).generate(palette -> setupImage(palette, resource));
                                     }
                                 });
                     }
@@ -230,17 +224,18 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
                 }
             });
         } else {
-            final Bitmap image = BitmapFactory.decodeByteArray(post.getImageByte(), 0, post.getImageByte().length);
-
-            Palette.from(image).generate(new Palette.PaletteAsyncListener() {
-                @Override
-                public void onGenerated (Palette palette) {
-                    setupImage(palette, image);
-                }
-            });
+            Glide.with(getApplicationContext())
+                    .load(post.getSource_url())
+                    .asBitmap()
+                    .into(new SimpleTarget<Bitmap>() {
+                        @Override
+                        public void onResourceReady (Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                            resource.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+                            Palette.from(resource).generate(palette -> setupImage(palette, resource));
+                        }
+                    });
         }
-
-//        setupWebView(webView, body);
     }
 
     private void handleFailure (Throwable t) {
