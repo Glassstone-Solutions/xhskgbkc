@@ -3,6 +3,7 @@ package net.glassstones.thediarymagazine.ui.adapters;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.text.Html;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -43,7 +44,6 @@ public class FlipAdapter extends BaseAdapter {
     private Context mContext;
     private List<Post> items;
     private LayoutInflater inflater;
-    private ViewHolder holder;
     private Callback callback;
     private TDMAPIClient client;
     private Tracker mTracker;
@@ -88,6 +88,7 @@ public class FlipAdapter extends BaseAdapter {
     @Override
     public View getView (int position, View convertView, ViewGroup parent) {
         View layout = convertView;
+        ViewHolder holder;
         if (layout == null) {
             layout = inflater.inflate(R.layout.news_item_headline, parent, false);
             holder = new Headline(layout);
@@ -110,7 +111,7 @@ public class FlipAdapter extends BaseAdapter {
         ct.setText(Html.fromHtml(p.getExcerpt()));
 
         itemPosition = position;
-        vh.getRoot().setOnClickListener((this::clickHandler));
+        vh.getRoot().setOnClickListener((v1 -> clickHandler(v1, p)));
     }
 
     private void setImage (Post p, ImageView i) {
@@ -145,11 +146,11 @@ public class FlipAdapter extends BaseAdapter {
         }
     }
 
-    private void clickHandler (View v) {
-        Post post = (Post) v.getTag();
-        if (post != null && callback != null) {
+    private void clickHandler (View v, Post p) {
+        if (p != null && callback != null) {
+            Log.e(TAG, String.valueOf(itemPosition));
             NewsItem ni = new NewsItem();
-            ni.setPost(items.get(itemPosition == -1 ? -1 : itemPosition));
+            ni.setPost(p);
             callback.onPageRequested(ni);
             mTracker.send(new HitBuilders.EventBuilder()
                     .setCategory("Action")

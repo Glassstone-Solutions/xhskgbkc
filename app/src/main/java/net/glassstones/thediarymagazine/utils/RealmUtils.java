@@ -2,7 +2,6 @@ package net.glassstones.thediarymagazine.utils;
 
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import net.glassstones.thediarymagazine.network.models.Categories;
 import net.glassstones.thediarymagazine.network.models.NI;
@@ -41,7 +40,6 @@ public class RealmUtils {
     }
 
     public void savePosts (final List<NI> nis, final List<Post> posts) {
-        Log.e("SavePosts", "Saving Posts");
         mRealm.executeTransaction(realm -> {
             realm.copyToRealmOrUpdate(posts);
             EventBus.getDefault().post(new PostEvent()
@@ -49,7 +47,6 @@ public class RealmUtils {
                     .type(PostEvent.POST_LIST)
                     .status(PostEvent.SAVED)
             );
-            Log.e("SavePosts", "Saved Posts");
             listner.realmChange(nis);
         });
     }
@@ -155,7 +152,6 @@ public class RealmUtils {
                     p.setMediaSaved(true);
 
                     listner.realmChange(p);
-                    Log.e("TAG", "Media Saved");
                 });
 
             }

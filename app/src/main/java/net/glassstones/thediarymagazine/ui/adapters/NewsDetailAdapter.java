@@ -60,20 +60,24 @@ public class NewsDetailAdapter extends RecyclerView.Adapter {
 
             if (news.getFirstParagraph() != null) {
                 TextView tv1 = getTextPara(news.getFirstParagraph());
-                tv1.setLayoutParams(new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                ));
-                root.addView(tv1);
+                if (tv1 != null) {
+                    tv1.setLayoutParams(new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                    ));
+                    root.addView(tv1);
+                }
             }
 
             for (Element element : news.getOtherParagraphs()) {
                 TextView tv = getTextPara(element);
-                tv.setLayoutParams(new LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.WRAP_CONTENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                ));
-                root.addView(tv);
+                if (tv != null) {
+                    tv.setLayoutParams(new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                    ));
+                    root.addView(tv);
+                }
             }
         }
     }
@@ -84,14 +88,14 @@ public class NewsDetailAdapter extends RecyclerView.Adapter {
         CustomTextView timestamp = vh.getTimestamp();
 
         title.setText(Html.fromHtml(news.getTitle()));
-        source.setText("Source");
+        source.setText(R.string.source_placeholder);
         timestamp.setText(news.getDate());
     }
 
     private TextView getTextPara (Element element) {
         TextView valueTV = new TextView(context);
-        valueTV.setText(element.text() + "\n");
-        return valueTV;
+        valueTV.setText(String.format("%s\n", element.text()));
+        return element.text().isEmpty() ? null : valueTV;
     }
 
     @Override
@@ -108,10 +112,5 @@ public class NewsDetailAdapter extends RecyclerView.Adapter {
     @Override
     public int getItemCount () {
         return 2;
-    }
-
-    private void bindParagraph (DetailsParagraphViewHolder vh, Element e) {
-        TextView valueTV = new TextView(context);
-        valueTV.setText(e.text());
     }
 }

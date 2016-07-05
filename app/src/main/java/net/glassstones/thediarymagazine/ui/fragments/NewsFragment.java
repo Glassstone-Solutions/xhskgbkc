@@ -3,8 +3,6 @@ package net.glassstones.thediarymagazine.ui.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -19,17 +17,19 @@ import net.glassstones.thediarymagazine.network.models.NewsItem;
 import net.glassstones.thediarymagazine.network.models.Post;
 import net.glassstones.thediarymagazine.network.models.PostEvent;
 import net.glassstones.thediarymagazine.ui.activities.NewsDetailsActivity;
-import net.glassstones.thediarymagazine.ui.adapters.NewsFlipAdapter;
+import net.glassstones.thediarymagazine.ui.adapters.FlipAdapter;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import io.realm.Realm;
+import io.realm.Sort;
 import se.emilsjolander.flipview.FlipView;
 import se.emilsjolander.flipview.OverFlipMode;
 
@@ -42,26 +42,9 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     @InjectView(R.id.list)
     FlipView list;
 
-    NewsFlipAdapter mAdapter;
+    FlipAdapter mAdapter;
 
     Realm realm;
-
-    // Create the Handler object (on the main thread by default)
-    Handler handler = new Handler(Looper.getMainLooper());
-    // Define the code block to be executed
-    private Runnable runnableCode = new Runnable() {
-        @Override
-        public void run () {
-            // Do something here on the main thread
-            // Repeat this the same runnable code block again another 2 seconds
-            if (clusters.size() == 0) {
-                Log.d("Handlers", "Called on main thread");
-                clusters = Common.getNewsCluster(realm);
-                mAdapter.update(Common.getNewsCluster(realm));
-            }
-            handler.postDelayed(runnableCode, 2000);
-        }
-    };
 
     public NewsFragment () {
         // Required empty public constructor
@@ -113,7 +96,8 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     }
 
     @Override
-    public void onOverFlip (FlipView v, OverFlipMode mode, boolean overFlippingPrevious, float overFlipDistance, float flipDistancePerPage) {
+    public void onOverFlip (FlipView v, OverFlipMode mode, boolean overFlippingPrevious, float
+            overFlipDistance, float flipDistancePerPage) {
 
     }
 
@@ -127,18 +111,19 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
         super.onCreate(savedInstanceState);
         Log.e(TAG, "On Create");
         realm = Realm.getDefaultInstance();
-        handler.post(runnableCode);
     }
 
     @Override
     public void onViewCreated (View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        List<Post> posts = realm.where(Post.class).findAllSorted(Post.CREATED_AT, Sort.DESCENDING);
         if (realm.where(Post.class).count() > 0) {
             clusters = Common.getNewsCluster(realm);
         } else {
             clusters = new ArrayList<>();
         }
-        mAdapter = new NewsFlipAdapter(getActivity(), clusters);
+        mAdapter = new FlipAdapter(getActivity(), posts);
+        mAdapter.setCallback(this);
         list.setAdapter(mAdapter);
         list.setOnFlipListener(this);
         list.setOnOverFlipListener(this);
@@ -147,7 +132,5 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onPostEvent (PostEvent event) {
-        Log.e(TAG, String.valueOf(event.getType()));
-        mAdapter.update(Common.getNewsCluster(realm));
     }
 }

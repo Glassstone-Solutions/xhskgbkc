@@ -1,13 +1,14 @@
 package net.glassstones.thediarymagazine.ui.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.AppBarLayout;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.widget.ProgressBar;
 
 import net.glassstones.thediarymagazine.Common;
+import net.glassstones.thediarymagazine.Constants;
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.network.Callback;
 import net.glassstones.thediarymagazine.network.ServiceGenerator;
@@ -39,6 +40,7 @@ import se.emilsjolander.flipview.OverFlipMode;
 public class CategoryActivity extends AppCompatActivity implements
         FlipView.OnFlipListener,
         FlipView.OnOverFlipListener, Callback {
+    private static final String TAG = CategoryActivity.class.getSimpleName();
     @InjectView(R.id.progress)
     ProgressBar progress;
     @InjectView(R.id.list)
@@ -51,8 +53,9 @@ public class CategoryActivity extends AppCompatActivity implements
     @InjectView(R.id.appbar)
     AppBarLayout appbar;
     int category;
-    private Subscription postsSubscription;
     Realm realm;
+    Call<WPMedia> getMedia;
+    private Subscription postsSubscription;
 
     @Override
     protected void onCreate (Bundle savedInstanceState) {
@@ -64,7 +67,8 @@ public class CategoryActivity extends AppCompatActivity implements
 
         assert getSupportActionBar() != null;
 
-        getSupportActionBar().setDisplayShowTitleEnabled(false);
+        getSupportActionBar().setDisplayShowTitleEnabled(true);
+        getSupportActionBar().setTitle(Constants.CATEGOIRES[category]);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         realm = Realm.getDefaultInstance();
@@ -88,12 +92,17 @@ public class CategoryActivity extends AppCompatActivity implements
         Observable<ArrayList<NI>> postsObserver = client.getPostsObservableByCategory(category,
                 25, skip + posts.size());
 
+//        postsSubscription = postsObserver
+//                .flatMap(nis -> Observable.from(nis)
+//                        .flatMap(ni -> client.getMediaObservable(ni.getFeatured_media())
+//                                .first().doOnNext(ni::setMedia).map((m -> ni))));
+
         postsSubscription = postsObserver
                 .flatMap(Observable::from)
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnNext(ni -> {
-                    Call<WPMedia> getMedia = client.getMedia(ni.getFeatured_media());
+                    getMedia = client.getMedia(ni.getFeatured_media());
                     getMedia.enqueue(new retrofit2.Callback<WPMedia>() {
                         @Override
                         public void onResponse (Call<WPMedia> call, Response<WPMedia> response) {
@@ -102,8 +111,7 @@ public class CategoryActivity extends AppCompatActivity implements
 
                         @Override
                         public void onFailure (Call<WPMedia> call, Throwable t) {
-                            Snackbar.make(list, "The thing failed", Snackbar
-                                    .LENGTH_LONG).show();
+
                         }
                     });
                 })
@@ -154,6 +162,9 @@ public class CategoryActivity extends AppCompatActivity implements
     @Override
     protected void onStop () {
         super.onStop();
+        if (getMedia != null) {
+            getMedia.cancel();
+        }
         postsSubscription.unsubscribe();
     }
 
@@ -176,6 +187,8 @@ public class CategoryActivity extends AppCompatActivity implements
 
     @Override
     public void onPageRequested (NewsItem newsItem) {
-
+        Intent i = new Intent(this, NewsDetailsActivity.class);
+        i.putExtra("post_id", newsItem.getPost().getId());
+        startActivity(i);
     }
 }
