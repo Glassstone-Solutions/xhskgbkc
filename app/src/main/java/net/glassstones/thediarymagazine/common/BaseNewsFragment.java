@@ -3,7 +3,6 @@ package net.glassstones.thediarymagazine.common;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.view.View;
 
 import com.google.android.gms.analytics.HitBuilders;
@@ -20,7 +19,7 @@ import butterknife.ButterKnife;
  * Created by Thompson on 08/06/2016.
  * For The Diary Magazine
  */
-public abstract class BaseNewsFragment extends Fragment {
+public abstract class BaseNewsFragment extends BaseFragment {
     protected String TAG = clazz().getSimpleName();
     protected List<NewsCluster> clusters;
 

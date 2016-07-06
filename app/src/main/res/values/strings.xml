@@ -103,4 +103,7 @@
     <string name="action_comment">Comment</string>
     <string name="title_activity_category">Category</string>
     <string name="source_placeholder">Source</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

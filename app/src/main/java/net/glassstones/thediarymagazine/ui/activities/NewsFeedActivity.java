@@ -32,6 +32,7 @@ import net.glassstones.thediarymagazine.services.UpdateLocalPostsService;
 import net.glassstones.thediarymagazine.ui.adapters.MyFragmentAdapter;
 import net.glassstones.thediarymagazine.ui.fragments.DashboardFragment;
 import net.glassstones.thediarymagazine.ui.fragments.NewsFragment;
+import net.glassstones.thediarymagazine.ui.fragments.SearchFragment;
 import net.glassstones.thediarymagazine.ui.fragments.UnderConstructionFragment;
 import net.glassstones.thediarymagazine.utils.HelperSharedPreferences;
 import net.glassstones.thediarymagazine.utils.RealmUtils;
@@ -250,7 +251,7 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
         adapter.addFrag(new NewsFragment());
 //        adapter.addFrag(UnderConstructionFragment.newInstance(defaultTabIcons[2], "Search"));
         adapter.addFrag(new DashboardFragment());
-        adapter.addFrag(UnderConstructionFragment.newInstance(defaultTabIcons[2], "Search"));
+        adapter.addFrag(new SearchFragment());
         adapter.addFrag(UnderConstructionFragment.newInstance(defaultTabIcons[3], "Favorites"));
         adapter.addFrag(UnderConstructionFragment.newInstance(defaultTabIcons[4], "Shopping"));
         mPager.setAdapter(adapter);

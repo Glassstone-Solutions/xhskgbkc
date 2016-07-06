@@ -11,4 +11,5 @@
     <color name="colorBtnPressed">#188FFF</color>
     <color name="secondaryColorDark">#e0e0e0</color>
     <color name="avoLightGray">#efefef</color>
+    <color name="colorBackground">#f9f9f9</color>
 </resources>

@@ -7,6 +7,7 @@ import java.util.ArrayList;
 
 import retrofit2.Call;
 import retrofit2.http.GET;
+import retrofit2.http.Headers;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 import rx.Observable;
@@ -35,6 +36,10 @@ public interface TDMAPIClient {
     Observable<ArrayList<NI>>getPostsObservableByCategory(@Query("categories") int category, @Query
             ("per_page")
     int limit, @Query("page") int skip);
+
+    @GET("wp-json/wp/v2/posts")
+    @Headers("Cache-Control: no-cache")
+    Observable<ArrayList<NI>>searchPostsObservable(@Query ("search") String q);
     @GET("wp-json/wp/v2/media/{id}")
     Call<WPMedia> getMedia(@Path("id") int id);
 

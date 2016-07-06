@@ -8,10 +8,10 @@ import net.glassstones.thediarymagazine.Common;
 
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by Thompson on 08/06/2016.
@@ -58,7 +58,7 @@ public class ServiceGenerator {
 
         builder.addInterceptor(chain -> {
             //this is where we will add whatever we want to our request headers.
-            okhttp3.Request request = chain.request().newBuilder().addHeader("Accept",
+            Request request = chain.request().newBuilder().addHeader("Accept",
                     "application/json").build();
             return chain.proceed(request);
         });
@@ -68,7 +68,7 @@ public class ServiceGenerator {
     }
 
     private Retrofit createRetrofit (Gson gson, OkHttpClient okHttpClient) {
-        RxJavaCallAdapterFactory rxAdapter = RxJavaCallAdapterFactory.createWithScheduler(Schedulers.io());
+        RxJavaCallAdapterFactory rxAdapter = RxJavaCallAdapterFactory.create();
         return new Retrofit.Builder()
                 .addConverterFactory(GsonConverterFactory.create(gson))
                 .addCallAdapterFactory(rxAdapter)
@@ -76,6 +76,25 @@ public class ServiceGenerator {
                 .client(okHttpClient)
                 .build();
     }
+
+    public static TDMAPIClient createGithubService () {
+        Retrofit.Builder builder = new Retrofit.Builder().addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .addConverterFactory(GsonConverterFactory.create())
+                .baseUrl(API_BASE_URL);
+
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(chain -> {
+            Request request = chain.request();
+            Request newReq = request.newBuilder()
+                    .build();
+            return chain.proceed(newReq);
+        }).build();
+
+        builder.client(client);
+
+        return builder.build().create(TDMAPIClient.class);
+    }
+
+
 
     public <S> S createService (Class<S> serviceClass) {
         return retrofit.create(serviceClass);

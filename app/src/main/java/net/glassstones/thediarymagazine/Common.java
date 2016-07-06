@@ -12,6 +12,7 @@ import com.google.android.gms.analytics.ExceptionReporter;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 import com.squareup.leakcanary.LeakCanary;
+import com.squareup.leakcanary.RefWatcher;
 
 import net.glassstones.thediarymagazine.common.receivers.DeepLinkReceiver;
 import net.glassstones.thediarymagazine.network.models.NI;
@@ -37,6 +38,16 @@ public class Common extends MultiDexApplication {
 
     public static volatile Context applicationContext;
     private Tracker mTracker;
+    private RefWatcher _refWatcher;
+    private static Common instance;
+
+    public static Common get(){
+        return instance;
+    }
+
+    public static RefWatcher getRefWatcher() {
+        return Common.get()._refWatcher;
+    }
 
     public static List<NewsCluster> getNewsCluster (Realm realm) {
         List<Post> p = realm.where(Post.class).findAll();
@@ -122,6 +133,8 @@ public class Common extends MultiDexApplication {
 
         applicationContext = getApplicationContext();
 
+        instance = (Common) getApplicationContext();
+
         Thread.UncaughtExceptionHandler myHandler = new ExceptionReporter(
                 this.getDefaultTracker(),
                 Thread.getDefaultUncaughtExceptionHandler(),
@@ -132,7 +145,7 @@ public class Common extends MultiDexApplication {
 
         IntentFilter intentFilter = new IntentFilter(DeepLinkHandler.ACTION);
         LocalBroadcastManager.getInstance(this).registerReceiver(new DeepLinkReceiver(), intentFilter);
-        LeakCanary.install(this);
+        _refWatcher = LeakCanary.install(this);
 
         RealmConfiguration config = new RealmConfiguration.Builder(this)
                 .deleteRealmIfMigrationNeeded()
