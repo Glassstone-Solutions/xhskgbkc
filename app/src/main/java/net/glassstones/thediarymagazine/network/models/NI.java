@@ -1,14 +1,18 @@
 package net.glassstones.thediarymagazine.network.models;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.google.gson.annotations.SerializedName;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by Thompson on 08/06/2016.
  * For The Diary Magazine
  */
-public class NI {
+public class NI implements Parcelable {
 
     private int id;
     @SerializedName("date")
@@ -144,4 +148,53 @@ public class NI {
                 ", categories=" + categories +
                 '}';
     }
+
+    @Override
+    public int describeContents () {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel (Parcel dest, int flags) {
+        dest.writeInt(this.id);
+        dest.writeString(this.created_at);
+        dest.writeString(this.slug);
+        dest.writeString(this.type);
+        dest.writeString(this.link);
+        dest.writeParcelable(this.title, flags);
+        dest.writeParcelable(this.content, flags);
+        dest.writeParcelable(this.excerpt, flags);
+        dest.writeInt(this.authorId);
+        dest.writeInt(this.featured_media);
+        dest.writeParcelable(this.media, flags);
+        dest.writeList(this.categories);
+    }
+
+    protected NI (Parcel in) {
+        this.id = in.readInt();
+        this.created_at = in.readString();
+        this.slug = in.readString();
+        this.type = in.readString();
+        this.link = in.readString();
+        this.title = in.readParcelable(WPTitle.class.getClassLoader());
+        this.content = in.readParcelable(WPContent.class.getClassLoader());
+        this.excerpt = in.readParcelable(WPExcerpt.class.getClassLoader());
+        this.authorId = in.readInt();
+        this.featured_media = in.readInt();
+        this.media = in.readParcelable(WPMedia.class.getClassLoader());
+        this.categories = new ArrayList<Integer>();
+        in.readList(this.categories, Integer.class.getClassLoader());
+    }
+
+    public static final Parcelable.Creator<NI> CREATOR = new Parcelable.Creator<NI>() {
+        @Override
+        public NI createFromParcel (Parcel source) {
+            return new NI(source);
+        }
+
+        @Override
+        public NI[] newArray (int size) {
+            return new NI[size];
+        }
+    };
 }

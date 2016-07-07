@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.common.BaseFragment;
@@ -49,9 +50,12 @@ public class SearchFragment extends BaseFragment {
     @InjectView(R.id.search_result_rv)
     RecyclerView searchResultRv;
     TDMAPIClient client;
+    @InjectView(R.id.progress)
+    ProgressBar progress;
     private Subscription _subscription;
     private List<NI> _posts;
     private SearchResultAdapter adapter;
+    private String searchQuery;
 
     public SearchFragment () {
         // Required empty public constructor
@@ -80,6 +84,10 @@ public class SearchFragment extends BaseFragment {
         searchEt.setOnFocusChangeListener((v, hasFocus) -> hideKeyboard(v));
         searchResultRv.setLayoutManager(new LinearLayoutManager(getActivity()));
         searchResultRv.setAdapter(adapter);
+        searchResultRv.setOnTouchListener((v, event) -> {
+            hideKeyboard(searchEt);
+            return false;
+        });
     }
 
     private void hideKeyboard (View v) {
@@ -92,12 +100,23 @@ public class SearchFragment extends BaseFragment {
     @Override
     public void onActivityCreated (@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-//        setupResultView();
+        if (savedInstanceState != null)
+            searchQuery = savedInstanceState.getString("SearchQuery");
+        else
+            searchQuery = "";
+    }
+
+    @Override
+    public void onSaveInstanceState (Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString("SearchQuery", searchQuery);
     }
 
     @Override
     public void onPause () {
         super.onPause();
+        _posts.clear();
+        adapter.update(_posts);
         hideKeyboard(searchEt);
     }
 
@@ -117,12 +136,17 @@ public class SearchFragment extends BaseFragment {
 
     @OnTextChanged({R.id.search_et})
     public void doSearch () {
-        if (_subscription != null && !_subscription.isUnsubscribed()){
+        if (_subscription != null && !_subscription.isUnsubscribed()) {
             _subscription.unsubscribe();
             _posts.clear();
             adapter.update(_posts);
         }
         String q = searchEt.getText().toString();
+        searchQuery = q;
+        if (CoreNullnessUtils.isNotNullOrEmpty(q)) {
+            progress.setVisibility(View.VISIBLE);
+            progress.setIndeterminate(true);
+        }
         doSubscribe(q);
     }
 
@@ -152,6 +176,8 @@ public class SearchFragment extends BaseFragment {
         return new Observer<NI>() {
             @Override
             public void onCompleted () {
+                progress.setVisibility(View.INVISIBLE);
+                hideKeyboard(searchEt);
                 Log.e(TAG, "Completed");
             }
 
@@ -164,6 +190,8 @@ public class SearchFragment extends BaseFragment {
             @Override
             public void onNext (NI news) {
                 if (_posts != null) {
+                    progress.setVisibility(progress.getVisibility() == View.VISIBLE ? View
+                            .INVISIBLE : View.INVISIBLE);
                     adapter.add(news);
                 }
             }

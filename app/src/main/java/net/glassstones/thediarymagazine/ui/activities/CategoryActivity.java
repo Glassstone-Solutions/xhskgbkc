@@ -2,9 +2,12 @@ package net.glassstones.thediarymagazine.ui.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.AppBarLayout;
+import android.support.v4.util.Pair;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.widget.ProgressBar;
 
 import net.glassstones.thediarymagazine.Common;
@@ -29,10 +32,9 @@ import io.realm.Realm;
 import io.realm.RealmList;
 import io.realm.Sort;
 import retrofit2.Call;
-import retrofit2.Response;
 import rx.Observable;
+import rx.Observer;
 import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 import se.emilsjolander.flipview.FlipView;
 import se.emilsjolander.flipview.OverFlipMode;
@@ -92,72 +94,125 @@ public class CategoryActivity extends AppCompatActivity implements
         Observable<ArrayList<NI>> postsObserver = client.getPostsObservableByCategory(category,
                 25, skip + posts.size());
 
-//        postsSubscription = postsObserver
-//                .flatMap(nis -> Observable.from(nis)
-//                        .flatMap(ni -> client.getMediaObservable(ni.getFeatured_media())
-//                                .first().doOnNext(ni::setMedia).map((m -> ni))));
-
         postsSubscription = postsObserver
-                .flatMap(Observable::from)
                 .subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnNext(ni -> {
-                    getMedia = client.getMedia(ni.getFeatured_media());
-                    getMedia.enqueue(new retrofit2.Callback<WPMedia>() {
-                        @Override
-                        public void onResponse (Call<WPMedia> call, Response<WPMedia> response) {
-                            saveToRealm(response, ni);
-                        }
-
-                        @Override
-                        public void onFailure (Call<WPMedia> call, Throwable t) {
-
-                        }
-                    });
+                .flatMap(Observable::from)
+                .flatMap(ni -> {
+                    Observable<WPMedia> media = client.getMediaObservable(ni
+                            .getFeatured_media());
+                    return Observable.zip(Observable.just(ni), media, Pair::new);
                 })
-                .subscribe();
+                .flatMap(pair -> {
+                    NI post = pair.first;
+                    post.setMedia(pair.second);
+                    return Observable.just(post);
+                })
+                .flatMap(ni -> {
+                    Pair<Post, Realm> p = save(ni);
+                    return Observable.just(p);
+                })
+                .flatMap(pair -> {
+                    Realm r = pair.second;
+                    r.close();
+                    return Observable.just(pair.first);
+                })
+                .take(25)
+                .subscribe(observePost());
     }
 
-    private void saveToRealm (Response<WPMedia> response, NI ni) {
-        ni.setMedia(response.body());
+    private Observer<Post> observePost(){
+        return new Observer<Post>() {
+            @Override
+            public void onCompleted () {
+                Log.e(TAG, "Done!");
+            }
+
+            @Override
+            public void onError (Throwable e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onNext (Post post) {
+                Log.e(TAG, post.getTitle());
+            }
+        };
+    }
+
+    @NonNull
+    private Pair<Post, Realm> save (NI ni) {
         Realm r = Realm.getDefaultInstance();
-        Post p = r.where(Post.class).equalTo(Post.ID, ni.getId()).findFirst();
-
-        if (p == null) {
-            r.executeTransaction(realm -> {
-                Post p1 = realm.createObject(Post.class);
-                RealmList<Categories> categories = new RealmList<>();
-                for (Integer i : ni.getCategories()) {
-                    if (realm.where(Categories.class).equalTo("id", i).count
-                            () < 1) {
-                        Categories cat = realm.createObject(Categories.class);
-                        cat.setId(i);
-                        categories.add(cat);
-                    } else {
-                        Categories cat = realm.where(Categories.class)
-                                .equalTo("id", i).findFirst();
-                        categories.add(cat);
-                    }
-                }
-                p1.setId(ni.getId());
-                p1.setCreated_at(ni.getCreated_at());
-                p1.setSlug(ni.getSlug());
-                p1.setType(ni.getType());
-                p1.setLink(ni.getLink());
-                p1.setTitle(ni.getTitle().getTitle());
-                p1.setContent(ni.getContent().getContent());
-                p1.setExcerpt(ni.getExcerpt().getExcerpt());
-                p1.setAuthorId(ni.getAuthorId());
-                p1.setFeatured_media(ni.getFeatured_media());
-                p1.setMediaId(ni.getMedia().getId());
-                p1.setMedia_type(ni.getMedia().getMedia_type());
-                p1.setMime_type(ni.getMedia().getMime_type());
-                p1.setSource_url(ni.getMedia().getSourceUrl());
-                p1.setMediaSaved(true);
-                p1.setCategories(categories);
-            });
+        RealmList<Categories> categories = new RealmList<>();
+        for (Integer i : ni.getCategories()) {
+            if (r.where(Categories.class).equalTo("id", i).count() < 1) {
+                Categories cat = new Categories();
+                cat.setId(i);
+                categories.add(cat);
+            }
         }
+        Post p1 = new Post();
+        r.executeTransaction(realm1 -> {
+            p1.setId(ni.getId());
+            p1.setCreated_at(ni.getCreated_at());
+            p1.setSlug(ni.getSlug());
+            p1.setType(ni.getType());
+            p1.setLink(ni.getLink());
+            p1.setTitle(ni.getTitle().getTitle());
+            p1.setContent(ni.getContent().getContent());
+            p1.setExcerpt(ni.getExcerpt().getExcerpt());
+            p1.setAuthorId(ni.getAuthorId());
+            p1.setFeatured_media(ni.getFeatured_media());
+            p1.setMediaId(ni.getMedia().getId());
+            p1.setMedia_type(ni.getMedia().getMedia_type());
+            p1.setMime_type(ni.getMedia().getMime_type());
+            p1.setSource_url(ni.getMedia().getSourceUrl());
+            p1.setMediaSaved(true);
+            p1.setCategories(categories);
+        });
+        Pair<Post, Realm> pair = new Pair<>(p1, r);
+        return pair;
     }
+
+//    private void saveToRealm (Response<WPMedia> response, NI ni) {
+//        ni.setMedia(response.body());
+//        Realm r = Realm.getDefaultInstance();
+//        Post p = r.where(Post.class).equalTo(Post.ID, ni.getId()).findFirst();
+//
+//        if (p == null) {
+//            r.executeTransaction(realm -> {
+//                Post p1 = realm.createObject(Post.class);
+//                RealmList<Categories> categories = new RealmList<>();
+//                for (Integer i : ni.getCategories()) {
+//                    if (realm.where(Categories.class).equalTo("id", i).count
+//                            () < 1) {
+//                        Categories cat = realm.createObject(Categories.class);
+//                        cat.setId(i);
+//                        categories.add(cat);
+//                    } else {
+//                        Categories cat = realm.where(Categories.class)
+//                                .equalTo("id", i).findFirst();
+//                        categories.add(cat);
+//                    }
+//                }
+//                p1.setId(ni.getId());
+//                p1.setCreated_at(ni.getCreated_at());
+//                p1.setSlug(ni.getSlug());
+//                p1.setType(ni.getType());
+//                p1.setLink(ni.getLink());
+//                p1.setTitle(ni.getTitle().getTitle());
+//                p1.setContent(ni.getContent().getContent());
+//                p1.setExcerpt(ni.getExcerpt().getExcerpt());
+//                p1.setAuthorId(ni.getAuthorId());
+//                p1.setFeatured_media(ni.getFeatured_media());
+//                p1.setMediaId(ni.getMedia().getId());
+//                p1.setMedia_type(ni.getMedia().getMedia_type());
+//                p1.setMime_type(ni.getMedia().getMime_type());
+//                p1.setSource_url(ni.getMedia().getSourceUrl());
+//                p1.setMediaSaved(true);
+//                p1.setCategories(categories);
+//            });
+//        }
+//    }
 
     @Override
     protected void onStop () {

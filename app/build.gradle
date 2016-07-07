@@ -119,7 +119,5 @@ dependencies {
 
     compile 'com.github.bluejamesbond:textjustify-android:2.1.6'
     compile 'com.makeramen:roundedimageview:2.2.1'
-
-
 }
 apply plugin: 'com.google.gms.google-services'

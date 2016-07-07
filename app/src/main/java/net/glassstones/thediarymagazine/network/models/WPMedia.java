@@ -1,10 +1,13 @@
 package net.glassstones.thediarymagazine.network.models;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 /**
  * Created by Thompson on 08/06/2016.
  * For The Diary Magazine
  */
-public class WPMedia {
+public class WPMedia implements Parcelable {
 
     private int id;
     private String media_type;
@@ -54,4 +57,38 @@ public class WPMedia {
     public void setSource_url(String source_url) {
         this.source_url = source_url;
     }
+
+    @Override
+    public int describeContents () {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel (Parcel dest, int flags) {
+        dest.writeInt(this.id);
+        dest.writeString(this.media_type);
+        dest.writeString(this.mime_type);
+        dest.writeString(this.source_url);
+        dest.writeByteArray(this.image_byte);
+    }
+
+    protected WPMedia (Parcel in) {
+        this.id = in.readInt();
+        this.media_type = in.readString();
+        this.mime_type = in.readString();
+        this.source_url = in.readString();
+        this.image_byte = in.createByteArray();
+    }
+
+    public static final Parcelable.Creator<WPMedia> CREATOR = new Parcelable.Creator<WPMedia>() {
+        @Override
+        public WPMedia createFromParcel (Parcel source) {
+            return new WPMedia(source);
+        }
+
+        @Override
+        public WPMedia[] newArray (int size) {
+            return new WPMedia[size];
+        }
+    };
 }

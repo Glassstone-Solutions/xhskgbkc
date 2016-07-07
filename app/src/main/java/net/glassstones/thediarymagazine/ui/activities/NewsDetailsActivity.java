@@ -52,11 +52,13 @@ import java.text.ParseException;
 import java.util.List;
 
 import butterknife.InjectView;
+import co.kaush.core.util.CoreNullnessUtils;
 import io.realm.Realm;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
+// TODO Refactor to clean up code
 @DeepLink({"tdm://posts/{id}", "http://www.thediarymagazine.com/{slug}"})
 public class NewsDetailsActivity extends BaseActivity implements RealmUtils.RealmInterface {
 
@@ -166,9 +168,35 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
         } else if (getIntent().getIntExtra("post_id", -1) != -1) {
             post = realmUtils.getPost("id", getIntent().getIntExtra("post_id", -1));
             initPost(post);
+        } else if (getIntent().getParcelableExtra("postBundle") != null) {
+            NI post = getIntent().getParcelableExtra("postBundle");
+            initPost(post);
         } else {
             showToast("no deep link :( ");
         }
+    }
+
+    private void initPost (NI post) {
+        PostParser postParser = new PostParser().invoke(post.getContent().getContent(), "td-header-wrap", "p");
+        Element b = postParser.getB();
+        Elements elements = postParser.getElements();
+
+        setNewsFromParcel(b, elements, post);
+        String source = post.getMedia().getSourceUrl();
+        if (CoreNullnessUtils.isNotNullOrEmpty(source)) {
+            Glide.with(getApplicationContext())
+                    .load(source)
+                    .asBitmap()
+                    .into(new SimpleTarget<Bitmap>(myWidth, myHeight) {
+                        @Override
+                        public void onResourceReady (Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                            resource.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+                            Palette.from(resource).generate(palette -> setupImage(palette, resource));
+                        }
+                    });
+        }
+
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -176,24 +204,11 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
 
         post = body;
 
-        Document t = Jsoup.parse(post.getContent());
+        PostParser postParser = new PostParser().invoke(post.getContent(), "td-header-wrap", "p");
+        Element b = postParser.getB();
+        Elements elements = postParser.getElements();
 
-        Element b = t.getElementsByClass("td-header-wrap").first();
-
-        Elements elements = t.select("p");
-
-        News news = null;
-
-        try {
-            news = new News().title(post.getTitle()).date(UIUtils.getTimeAgo(post.getCreated_at
-                    ())).firstParagraph(b).otherParagraphs(elements);
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-        NewsDetailAdapter adapter = new NewsDetailAdapter(this, news);
-
-        newsView.setLayoutManager(new LinearLayoutManager(this));
-        newsView.setAdapter(adapter);
+        setNews(b, elements);
 
         if (!post.isMediaSaved()) {
             Call<WPMedia> media = client.getMedia(body.getFeatured_media());
@@ -236,6 +251,36 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
                         }
                     });
         }
+    }
+
+    private void setNews (Element b, Elements elements) {
+        News news = null;
+
+        try {
+            news = new News().title(post.getTitle()).date(UIUtils.getTimeAgo(post.getCreated_at
+                    ())).firstParagraph(b).otherParagraphs(elements);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        NewsDetailAdapter adapter = new NewsDetailAdapter(this, news);
+
+        newsView.setLayoutManager(new LinearLayoutManager(this));
+        newsView.setAdapter(adapter);
+    }
+
+    private void setNewsFromParcel (Element b, Elements elements, NI post) {
+        News news = null;
+
+        try {
+            news = new News().title(post.getTitle().getTitle()).date(UIUtils.getTimeAgo(post.getCreated_at
+                    ())).firstParagraph(b).otherParagraphs(elements);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        NewsDetailAdapter adapter = new NewsDetailAdapter(this, news);
+
+        newsView.setLayoutManager(new LinearLayoutManager(this));
+        newsView.setAdapter(adapter);
     }
 
     private void handleFailure (Throwable t) {
@@ -308,5 +353,27 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
     @Override
     public void postSaveFailed (Post post, Throwable t) {
 
+    }
+
+    private class PostParser {
+        private Element b;
+        private Elements elements;
+
+        public Element getB () {
+            return b;
+        }
+
+        public Elements getElements () {
+            return elements;
+        }
+
+        public PostParser invoke (String content, String firstElement, String tag) {
+            Document t = Jsoup.parse(content);
+
+            b = t.getElementsByClass(firstElement).first();
+
+            elements = t.select(tag);
+            return this;
+        }
     }
 }

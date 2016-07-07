@@ -1,6 +1,7 @@
 package net.glassstones.thediarymagazine.ui.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.util.Log;
@@ -15,6 +16,7 @@ import com.makeramen.roundedimageview.RoundedImageView;
 
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.network.models.NI;
+import net.glassstones.thediarymagazine.ui.activities.NewsDetailsActivity;
 import net.glassstones.thediarymagazine.ui.widgets.CustomTextView;
 
 import java.util.ArrayList;
@@ -60,6 +62,12 @@ public class SearchResultAdapter extends RecyclerView.Adapter {
 
 
         Log.e(TAG, post.getTitle().getTitle());
+
+        root.setOnClickListener(v -> {
+            Intent i = new Intent(context, NewsDetailsActivity.class);
+            i.putExtra("postBundle", post);
+            context.startActivity(i);
+        });
 
     }
 
