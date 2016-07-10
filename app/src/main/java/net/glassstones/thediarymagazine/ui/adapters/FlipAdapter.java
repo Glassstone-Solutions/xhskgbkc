@@ -1,7 +1,6 @@
 package net.glassstones.thediarymagazine.ui.adapters;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -13,8 +12,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.SimpleTarget;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 
@@ -23,17 +20,14 @@ import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.network.Callback;
 import net.glassstones.thediarymagazine.network.ServiceGenerator;
 import net.glassstones.thediarymagazine.network.TDMAPIClient;
+import net.glassstones.thediarymagazine.network.models.NI;
 import net.glassstones.thediarymagazine.network.models.NewsItem;
-import net.glassstones.thediarymagazine.network.models.Post;
-import net.glassstones.thediarymagazine.network.models.WPMedia;
 import net.glassstones.thediarymagazine.ui.widgets.CustomTextView;
 
 import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import retrofit2.Call;
-import retrofit2.Response;
 
 /**
  * Created by Thompson on 03/07/2016.
@@ -42,7 +36,7 @@ import retrofit2.Response;
 public class FlipAdapter extends BaseAdapter {
     private static final String TAG = FlipAdapter.class.getSimpleName();
     private Context mContext;
-    private List<Post> items;
+    private List<NI> items;
     private LayoutInflater inflater;
     private Callback callback;
     private TDMAPIClient client;
@@ -50,7 +44,7 @@ public class FlipAdapter extends BaseAdapter {
 
     private int itemPosition = -1;
 
-    public FlipAdapter (Context mContext, List<Post> posts) {
+    public FlipAdapter (Context mContext, List<NI> posts) {
         this.mContext = mContext;
         this.items = posts;
         init();
@@ -101,52 +95,24 @@ public class FlipAdapter extends BaseAdapter {
     }
 
     private void bindView (int position, ViewHolder v) {
-        Post p = items.get(position);
+        NI p = items.get(position);
         Headline vh = (Headline) v;
         ImageView splash = vh.getmSplash();
         setImage(p, splash);
         TextView t = vh.getmTitle();
-        t.setText(Html.fromHtml(p.getTitle()));
+        t.setText(Html.fromHtml(p.getTitle().title()));
         CustomTextView ct = vh.getExcerpt();
-        ct.setText(Html.fromHtml(p.getExcerpt()));
+        ct.setText(Html.fromHtml(p.getExcerpt().excerpt()));
 
         itemPosition = position;
         vh.getRoot().setOnClickListener((v1 -> clickHandler(v1, p)));
     }
 
-    private void setImage (Post p, ImageView i) {
-        if (p.isMediaSaved()) {
-            Glide.with(mContext).load(p.getSource_url()).into(i);
-        } else {
-            Call<WPMedia> mediaCall = client.getMedia(p.getFeatured_media());
-            mediaCall.enqueue(new retrofit2.Callback<WPMedia>() {
-                @Override
-                public void onResponse (Call<WPMedia> call, Response<WPMedia> response) {
-                    String url = response.body().getSourceUrl();
-                    try {
-                        Glide.with(mContext)
-                                .load(url != null ? url : "")
-                                .asBitmap()
-                                .into(new SimpleTarget<Bitmap>() {
-                                    @Override
-                                    public void onResourceReady (Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
-                                        i.setImageBitmap(resource);
-                                    }
-                                });
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-
-                @Override
-                public void onFailure (Call<WPMedia> call, Throwable t) {
-
-                }
-            });
-        }
+    private void setImage (NI p, ImageView i) {
+        Glide.with(mContext).load(p.getMedia().getSourceUrl()).into(i);
     }
 
-    private void clickHandler (View v, Post p) {
+    private void clickHandler (View v, NI p) {
         if (p != null && callback != null) {
             Log.e(TAG, String.valueOf(itemPosition));
             NewsItem ni = new NewsItem();
