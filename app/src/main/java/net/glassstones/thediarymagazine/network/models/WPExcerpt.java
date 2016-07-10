@@ -14,7 +14,7 @@ public class WPExcerpt implements Parcelable {
     @SerializedName("rendered")
     private String excerpt;
 
-    public String getExcerpt() {
+    public String excerpt () {
         return excerpt;
     }
 
