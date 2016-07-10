@@ -125,6 +125,12 @@ public class FlipAdapter extends BaseAdapter {
         }
     }
 
+    public void update (List<NI> posts) {
+        items.clear();
+        items = posts;
+        notifyDataSetChanged();
+    }
+
     public static class ViewHolder {
 
     }

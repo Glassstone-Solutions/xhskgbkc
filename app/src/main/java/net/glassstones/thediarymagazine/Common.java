@@ -60,8 +60,8 @@ public class Common extends MultiDexApplication {
         List<NewsItem> list = new ArrayList<>();
         for (int i = 0; i < posts.size(); i++) {
             NewsItem item = new NewsItem();
-            item.setPost(posts.get(i));
-            list.add(item);
+//            item.setPost(posts.get(i));
+//            list.add(item);
         }
         return list;
     }

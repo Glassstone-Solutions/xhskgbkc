@@ -4,18 +4,24 @@ package net.glassstones.thediarymagazine.ui.fragments;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.util.Pair;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import net.glassstones.thediarymagazine.Common;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.common.BaseNewsFragment;
 import net.glassstones.thediarymagazine.network.Callback;
+import net.glassstones.thediarymagazine.network.ServiceGenerator;
+import net.glassstones.thediarymagazine.network.TDMAPIClient;
+import net.glassstones.thediarymagazine.network.models.NI;
 import net.glassstones.thediarymagazine.network.models.NewsItem;
-import net.glassstones.thediarymagazine.network.models.Post;
 import net.glassstones.thediarymagazine.network.models.PostEvent;
+import net.glassstones.thediarymagazine.network.models.WPMedia;
 import net.glassstones.thediarymagazine.ui.activities.NewsDetailsActivity;
 import net.glassstones.thediarymagazine.ui.adapters.FlipAdapter;
 
@@ -23,13 +29,20 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import co.kaush.core.util.CoreNullnessUtils;
 import io.realm.Realm;
-import io.realm.Sort;
+import rx.Observable;
+import rx.Observer;
+import rx.Subscription;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
+import rx.subscriptions.CompositeSubscription;
 import se.emilsjolander.flipview.FlipView;
 import se.emilsjolander.flipview.OverFlipMode;
 
@@ -44,10 +57,25 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
 
     FlipAdapter mAdapter;
 
+    List<NI> posts;
+
     Realm realm;
+    TDMAPIClient client;
+
+    CompositeSubscription subscriptions;
 
     public NewsFragment () {
         // Required empty public constructor
+    }
+
+    @Override
+    public void onCreate (@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Log.e(TAG, "On Create");
+        realm = Realm.getDefaultInstance();
+        client = ServiceGenerator.createGithubService();
+        posts = new ArrayList<>();
+
     }
 
     @Override
@@ -61,6 +89,30 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     }
 
     @Override
+    public void onViewCreated (View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        mAdapter = new FlipAdapter(getActivity(), posts);
+        mAdapter.setCallback(this);
+        list.setAdapter(mAdapter);
+        list.setOnFlipListener(this);
+        list.setOnOverFlipListener(this);
+        list.setOverFlipMode(OverFlipMode.RUBBER_BAND);
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+        if (savedInstanceState != null &&
+                CoreNullnessUtils.isNotNullOrEmpty(savedInstanceState.getString(NI.POST_LIST_PARCEL_KEY))) {
+            Gson gson = new Gson();
+            Type listType = new TypeToken<List<NI>>() {}.getType();
+            String dataGotFromServer = savedInstanceState.getString(NI.POST_LIST_PARCEL_KEY);
+            posts = gson.fromJson(dataGotFromServer, listType);
+            mAdapter.update(posts);
+        }
+    }
+
+    @Override
     public void onStart () {
         super.onStart();
         EventBus.getDefault().register(this);
@@ -69,12 +121,67 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     @Override
     public void onResume () {
         super.onResume();
+        Subscription postSub = client.getObservablePosts(25, 1, null)
+                .flatMap(Observable::from)
+                .flatMap(ni -> {
+                    Observable<WPMedia> media = client.getMediaObservable(ni.getFeatured_media());
+                    return Observable.zip(Observable.just(ni), media, Pair::new);
+                })
+                .flatMap(pair -> {
+                    NI post = pair.first;
+                    post.setMedia(pair.second);
+                    return Observable.just(post);
+                })
+                .toList()
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<List<NI>>() {
+                    @Override
+                    public void onCompleted () {
+                        Log.e(TAG, "Done!");
+                    }
+
+                    @Override
+                    public void onError (Throwable e) {
+                        Log.e(TAG, "Darn! App crapped");
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext (List<NI> nis) {
+                        posts.clear();
+                        posts = nis;
+                        mAdapter.update(posts);
+                    }
+                });
+        subscriptions = new CompositeSubscription();
+        subscriptions.add(postSub);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        Gson gson = new Gson();
+        Type listType = new TypeToken<List<NI>>() {}.getType();
+        String dataGotFromServer = gson.toJson(posts, listType);
+        outState.putString(NI.POST_LIST_PARCEL_KEY, dataGotFromServer);
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onPostEvent (PostEvent event) {
     }
 
     @Override
     public void onStop () {
         super.onStop();
         EventBus.getDefault().unregister(this);
+    }
+
+    @Override
+    public void onDestroyView () {
+        super.onDestroyView();
+        ButterKnife.reset(this);
+        subscriptions.unsubscribe();
     }
 
     @Override
@@ -106,31 +213,5 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
         return this.getClass();
     }
 
-    @Override
-    public void onCreate (@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Log.e(TAG, "On Create");
-        realm = Realm.getDefaultInstance();
-    }
 
-    @Override
-    public void onViewCreated (View view, Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        List<Post> posts = realm.where(Post.class).findAllSorted(Post.CREATED_AT, Sort.DESCENDING);
-        if (realm.where(Post.class).count() > 0) {
-            clusters = Common.getNewsCluster(realm);
-        } else {
-            clusters = new ArrayList<>();
-        }
-        mAdapter = new FlipAdapter(getActivity(), posts);
-        mAdapter.setCallback(this);
-        list.setAdapter(mAdapter);
-        list.setOnFlipListener(this);
-        list.setOnOverFlipListener(this);
-        list.setOverFlipMode(OverFlipMode.RUBBER_BAND);
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onPostEvent (PostEvent event) {
-    }
 }

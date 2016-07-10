@@ -14,7 +14,7 @@ public class WPTitle implements Parcelable {
     @SerializedName("rendered")
     private String title;
 
-    public String getTitle() {
+    public String title () {
         return title;
     }
 
