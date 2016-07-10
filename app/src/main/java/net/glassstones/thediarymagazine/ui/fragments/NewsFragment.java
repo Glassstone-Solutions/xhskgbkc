@@ -3,12 +3,14 @@ package net.glassstones.thediarymagazine.ui.fragments;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.util.Pair;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -63,6 +65,9 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     TDMAPIClient client;
 
     CompositeSubscription subscriptions;
+    Subscription moreSub;
+    @InjectView(R.id.progress)
+    ProgressBar progress;
 
     public NewsFragment () {
         // Required empty public constructor
@@ -85,12 +90,19 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
         View view = inflater.inflate(R.layout.fragment_news, container, false);
         ButterKnife.inject(this, view);
         view.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
+
+        progress.setIndeterminate(true);
+        progress.setVisibility(View.VISIBLE);
+
         return view;
     }
 
     @Override
     public void onViewCreated (View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+
+
         mAdapter = new FlipAdapter(getActivity(), posts);
         mAdapter.setCallback(this);
         list.setAdapter(mAdapter);
@@ -100,12 +112,13 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     }
 
     @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
+    public void onActivityCreated (Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
         if (savedInstanceState != null &&
                 CoreNullnessUtils.isNotNullOrEmpty(savedInstanceState.getString(NI.POST_LIST_PARCEL_KEY))) {
             Gson gson = new Gson();
-            Type listType = new TypeToken<List<NI>>() {}.getType();
+            Type listType = new TypeToken<List<NI>>() {
+            }.getType();
             String dataGotFromServer = savedInstanceState.getString(NI.POST_LIST_PARCEL_KEY);
             posts = gson.fromJson(dataGotFromServer, listType);
             mAdapter.update(posts);
@@ -121,17 +134,15 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     @Override
     public void onResume () {
         super.onResume();
-        Subscription postSub = client.getObservablePosts(25, 1, null)
+        assert posts != null;
+        if (posts.size() > 0) {
+            progress.setVisibility(View.GONE);
+        }
+
+        Subscription postSub = client.getObservablePosts(25, null, 1, null)
                 .flatMap(Observable::from)
-                .flatMap(ni -> {
-                    Observable<WPMedia> media = client.getMediaObservable(ni.getFeatured_media());
-                    return Observable.zip(Observable.just(ni), media, Pair::new);
-                })
-                .flatMap(pair -> {
-                    NI post = pair.first;
-                    post.setMedia(pair.second);
-                    return Observable.just(post);
-                })
+                .flatMap(this::getPairObservable)
+                .flatMap(this::getObservable)
                 .toList()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -151,6 +162,9 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
                     public void onNext (List<NI> nis) {
                         posts.clear();
                         posts = nis;
+                        if (posts.size() > 0 && progress.getVisibility() == View.VISIBLE) {
+                            progress.setVisibility(View.GONE);
+                        }
                         mAdapter.update(posts);
                     }
                 });
@@ -159,10 +173,11 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     }
 
     @Override
-    public void onSaveInstanceState(Bundle outState) {
+    public void onSaveInstanceState (Bundle outState) {
         super.onSaveInstanceState(outState);
         Gson gson = new Gson();
-        Type listType = new TypeToken<List<NI>>() {}.getType();
+        Type listType = new TypeToken<List<NI>>() {
+        }.getType();
         String dataGotFromServer = gson.toJson(posts, listType);
         outState.putString(NI.POST_LIST_PARCEL_KEY, dataGotFromServer);
     }
@@ -193,8 +208,44 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     @Override
     public void onPageRequested (NewsItem newsItem) {
         Intent i = new Intent(getActivity(), NewsDetailsActivity.class);
-        i.putExtra("post_id", newsItem.getPost().getId());
+        i.putExtra("postBundle", newsItem.getNi());
         getActivity().startActivity(i);
+    }
+
+    @Override
+    public void onMoreRequest (int offset) {
+
+        if (moreSub != null && !moreSub.isUnsubscribed()){
+            moreSub.isUnsubscribed();
+        }
+
+        moreSub = client.getObservablePosts(25, offset, 1, null)
+                .flatMap(Observable::from)
+                .flatMap(this::getPairObservable)
+                .flatMap(this::getObservable)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Observer<NI>() {
+                    @Override
+                    public void onCompleted () {
+                        Log.e(TAG, "Done!");
+                    }
+
+                    @Override
+                    public void onError (Throwable e) {
+                        Log.e(TAG, "Darn! App crapped");
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onNext (NI ni) {
+                        Log.e(TAG, ni.getTitle().title());
+                        posts.add(ni);
+                        mAdapter.add();
+                        mAdapter.notifyDataSetChanged();
+                    }
+                });
+        subscriptions.add(moreSub);
     }
 
     @Override
@@ -211,6 +262,19 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     @Override
     public Class clazz () {
         return this.getClass();
+    }
+
+    @NonNull
+    private Observable<? extends NI> getObservable (Pair<NI, WPMedia> pair) {
+        NI post = pair.first;
+        post.setMedia(pair.second);
+        return Observable.just(post);
+    }
+
+    @NonNull
+    private Observable<? extends Pair<NI, WPMedia>> getPairObservable (NI ni) {
+        Observable<WPMedia> media = client.getMediaObservable(ni.getFeatured_media());
+        return Observable.zip(Observable.just(ni), media, Pair::new);
     }
 
 

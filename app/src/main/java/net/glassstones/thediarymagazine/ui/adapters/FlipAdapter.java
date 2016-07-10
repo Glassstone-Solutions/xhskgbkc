@@ -39,10 +39,11 @@ public class FlipAdapter extends BaseAdapter {
     private List<NI> items;
     private LayoutInflater inflater;
     private Callback callback;
-    private TDMAPIClient client;
     private Tracker mTracker;
 
     private int itemPosition = -1;
+
+    private int key = 25;
 
     public FlipAdapter (Context mContext, List<NI> posts) {
         this.mContext = mContext;
@@ -55,7 +56,7 @@ public class FlipAdapter extends BaseAdapter {
 
         ServiceGenerator sg = new ServiceGenerator((Common) mContext.getApplicationContext());
 
-        client = sg.createService(TDMAPIClient.class);
+        TDMAPIClient client = sg.createService(TDMAPIClient.class);
 
         mTracker = ((Common) mContext.getApplicationContext()).getDefaultTracker();
     }
@@ -95,6 +96,12 @@ public class FlipAdapter extends BaseAdapter {
     }
 
     private void bindView (int position, ViewHolder v) {
+
+        if (items.size() - position == 5 && key == 25) {
+            callback.onMoreRequest(items.size());
+            key = 0;
+        }
+
         NI p = items.get(position);
         Headline vh = (Headline) v;
         ImageView splash = vh.getmSplash();
@@ -129,6 +136,10 @@ public class FlipAdapter extends BaseAdapter {
         items.clear();
         items = posts;
         notifyDataSetChanged();
+    }
+
+    public void add () {
+        key++;
     }
 
     public static class ViewHolder {

@@ -199,4 +199,20 @@ public class NI implements Parcelable {
             return new NI[size];
         }
     };
+
+    @Override
+    public boolean equals (Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        NI ni = (NI) o;
+
+        return id == ni.id;
+
+    }
+
+    @Override
+    public int hashCode () {
+        return id;
+    }
 }

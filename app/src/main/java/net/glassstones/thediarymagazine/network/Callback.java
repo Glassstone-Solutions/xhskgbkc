@@ -8,4 +8,5 @@ import net.glassstones.thediarymagazine.network.models.NewsItem;
  */
 public interface Callback {
     void onPageRequested(NewsItem newsItem);
+    void onMoreRequest(int offset);
 }

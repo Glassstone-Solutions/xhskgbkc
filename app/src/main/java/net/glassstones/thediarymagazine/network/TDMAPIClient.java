@@ -21,7 +21,10 @@ public interface TDMAPIClient {
     Call<ArrayList<NI>> getPosts(@Query("per_page") int limit, @Query("page") int skip, @Query
             ("slug") String slug);
     @GET("wp-json/wp/v2/posts")
-    Observable<ArrayList<NI>> getObservablePosts(@Query("per_page") int perPage, @Query("page") int page, @Query("slug") String slug);
+    Observable<ArrayList<NI>> getObservablePosts(@Query("per_page") Integer perPage,
+                                                 @Query("offset") Integer offset,
+                                                 @Query("page") Integer page,
+                                                 @Query("slug") String slug);
     @GET("wp-json/wp/v2/posts/{id}")
     Call<NI> getPost(@Path("id") int id);
     @GET("wp-json/wp/v2/posts")
