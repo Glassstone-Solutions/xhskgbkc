@@ -58,10 +58,10 @@ public class SearchResultAdapter extends RecyclerView.Adapter {
         CustomTextView timestamp = vh.getTimestamp();
 
         Glide.with(context).load(post.getMedia().getSourceUrl()).into(splash);
-        title.setText(Html.fromHtml(post.getTitle().getTitle()));
+        title.setText(Html.fromHtml(post.getTitle().title()));
 
 
-        Log.e(TAG, post.getTitle().getTitle());
+        Log.e(TAG, post.getTitle().title());
 
         root.setOnClickListener(v -> {
             Intent i = new Intent(context, NewsDetailsActivity.class);

@@ -123,7 +123,7 @@ public class FlipAdapter extends BaseAdapter {
         if (p != null && callback != null) {
             Log.e(TAG, String.valueOf(itemPosition));
             NewsItem ni = new NewsItem();
-            ni.setPost(p);
+            ni.setNi(p);
             callback.onPageRequested(ni);
             mTracker.send(new HitBuilders.EventBuilder()
                     .setCategory("Action")

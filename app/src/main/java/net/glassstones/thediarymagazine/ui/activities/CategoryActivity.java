@@ -80,7 +80,7 @@ public class CategoryActivity extends AppCompatActivity implements
         List<Post> posts = realm.where(Post.class).equalTo("categories.id", category)
                 .findAllSorted(Post.CREATED_AT, Sort.DESCENDING);
 
-        mAdapter = new FlipAdapter(this, posts);
+//        mAdapter = new FlipAdapter(this, posts);
         mAdapter.setCallback(this);
         list.setAdapter(mAdapter);
         list.setOnFlipListener(this);
@@ -157,9 +157,9 @@ public class CategoryActivity extends AppCompatActivity implements
             p1.setSlug(ni.getSlug());
             p1.setType(ni.getType());
             p1.setLink(ni.getLink());
-            p1.setTitle(ni.getTitle().getTitle());
+            p1.setTitle(ni.getTitle().title());
             p1.setContent(ni.getContent().getContent());
-            p1.setExcerpt(ni.getExcerpt().getExcerpt());
+            p1.setExcerpt(ni.getExcerpt().excerpt());
             p1.setAuthorId(ni.getAuthorId());
             p1.setFeatured_media(ni.getFeatured_media());
             p1.setMediaId(ni.getMedia().getId());
@@ -199,9 +199,9 @@ public class CategoryActivity extends AppCompatActivity implements
 //                p1.setSlug(ni.getSlug());
 //                p1.setType(ni.getType());
 //                p1.setLink(ni.getLink());
-//                p1.setTitle(ni.getTitle().getTitle());
+//                p1.setTitle(ni.title().title());
 //                p1.setContent(ni.getContent().getContent());
-//                p1.setExcerpt(ni.getExcerpt().getExcerpt());
+//                p1.setExcerpt(ni.excerpt().excerpt());
 //                p1.setAuthorId(ni.getAuthorId());
 //                p1.setFeatured_media(ni.getFeatured_media());
 //                p1.setMediaId(ni.getMedia().getId());
@@ -245,5 +245,10 @@ public class CategoryActivity extends AppCompatActivity implements
         Intent i = new Intent(this, NewsDetailsActivity.class);
         i.putExtra("post_id", newsItem.getPost().getId());
         startActivity(i);
+    }
+
+    @Override
+    public void onMoreRequest (int offset) {
+
     }
 }

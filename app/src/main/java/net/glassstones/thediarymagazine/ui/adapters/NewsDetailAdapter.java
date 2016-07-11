@@ -3,13 +3,12 @@ package net.glassstones.thediarymagazine.ui.adapters;
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-
-import com.bluejamesbond.text.DocumentView;
-import com.bluejamesbond.text.style.TextAlignment;
+import android.widget.TextView;
 
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.network.models.News;
@@ -61,23 +60,25 @@ public class NewsDetailAdapter extends RecyclerView.Adapter {
             LinearLayout root = vh.getRoot();
 
             if (news.getFirstParagraph() != null) {
-                DocumentView tv1 = getTextPara(news.getFirstParagraph());
+                TextView tv1 = getTextPara(news.getFirstParagraph());
                 if (tv1 != null) {
                     tv1.setLayoutParams(new LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.WRAP_CONTENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
                     ));
+                    tv1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
                     root.addView(tv1);
                 }
             }
 
             for (Element element : news.getOtherParagraphs()) {
-                DocumentView tv = getTextPara(element);
+                TextView tv = getTextPara(element);
                 if (tv != null) {
                     tv.setLayoutParams(new LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.WRAP_CONTENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
                     ));
+                    tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
                     root.addView(tv);
                 }
             }
@@ -94,9 +95,8 @@ public class NewsDetailAdapter extends RecyclerView.Adapter {
         timestamp.setText(news.getDate());
     }
 
-    private DocumentView getTextPara (Element element) {
-        DocumentView valueTV = new DocumentView(context, DocumentView.PLAIN_TEXT);
-        valueTV.getDocumentLayoutParams().setTextAlignment(TextAlignment.JUSTIFIED);
+    private TextView getTextPara (Element element) {
+        TextView valueTV = new TextView(context);
         valueTV.setText(String.format("%s\n", element.text()));
         return element.text().isEmpty() ? null : valueTV;
     }

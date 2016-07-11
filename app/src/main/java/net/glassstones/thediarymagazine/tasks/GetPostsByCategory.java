@@ -38,8 +38,8 @@ public class GetPostsByCategory implements RealmUtils.RealmInterface {
                     final List<Post> rPosts = new ArrayList<>();
                     Realm r = Realm.getDefaultInstance();
                     for (NI p : posts) {
-                        Log.e("TAG", "" + p.getTitle().getTitle());
-                        Post post = r.where(Post.class).equalTo(Post.TITLE, p.getTitle().getTitle
+                        Log.e("TAG", "" + p.getTitle().title());
+                        Post post = r.where(Post.class).equalTo(Post.TITLE, p.getTitle().title
                                 ()).findFirst();
                         if (post != null) {
                             rPosts.add(realmUtils.getPost(Post.ID, p.getId()));

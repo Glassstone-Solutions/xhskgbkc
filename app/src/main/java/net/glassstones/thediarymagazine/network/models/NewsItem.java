@@ -7,7 +7,7 @@ package net.glassstones.thediarymagazine.network.models;
 public class NewsItem {
     String imageUrl;
 
-    Post post;
+    NI post;
 
     NI ni;
 
@@ -18,11 +18,11 @@ public class NewsItem {
         return imageUrl;
     }
 
-    public Post getPost() {
+    public NI getPost() {
         return post;
     }
 
-    public void setPost(Post post) {
+    public void setPost(NI post) {
         this.post = post;
     }
 

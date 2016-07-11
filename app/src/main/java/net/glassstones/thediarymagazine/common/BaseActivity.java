@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity;
 
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
+import com.squareup.leakcanary.RefWatcher;
 
 import net.glassstones.thediarymagazine.Common;
 
@@ -34,5 +35,12 @@ public abstract class BaseActivity extends AppCompatActivity {
         mTracker.send(new HitBuilders.ScreenViewBuilder().build());
         setContentView(resourceId());
         ButterKnife.inject(this);
+    }
+
+    @Override
+    protected void onDestroy () {
+        super.onDestroy();
+        RefWatcher watcher = Common.getRefWatcher();
+        watcher.watch(this);
     }
 }

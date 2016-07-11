@@ -127,6 +127,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
             String name = parameters.getString("slug");
 
             if (!TextUtils.isEmpty(idString)) {
+                // TODO: Replace with RxJava
                 Call<NI> getPost = client.getPost(Integer.parseInt(idString));
                 getPost.enqueue(new Callback<NI>() {
                     @Override
@@ -272,7 +273,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
         News news = null;
 
         try {
-            news = new News().title(post.getTitle().getTitle()).date(UIUtils.getTimeAgo(post.getCreated_at
+            news = new News().title(post.getTitle().title()).date(UIUtils.getTimeAgo(post.getCreated_at
                     ())).firstParagraph(b).otherParagraphs(elements);
         } catch (ParseException e) {
             e.printStackTrace();

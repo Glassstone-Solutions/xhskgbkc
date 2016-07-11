@@ -81,7 +81,7 @@ public class RealmUtils {
         Post p = new Post();
 
         List<Post> posts = mRealm.where(Post.class).equalTo(Post.ID, ni.getId()).equalTo(Post
-                .TITLE, ni.getTitle().getTitle()).findAll();
+                .TITLE, ni.getTitle().title()).findAll();
 
         if (posts.size() > 0) {
             return null;
@@ -100,8 +100,8 @@ public class RealmUtils {
             }
         }
         p.setId(ni.getId());
-        p.setTitle(ni.getTitle().getTitle());
-        p.setExcerpt(ni.getExcerpt().getExcerpt());
+        p.setTitle(ni.getTitle().title());
+        p.setExcerpt(ni.getExcerpt().excerpt());
         p.setCreated_at(ni.getCreated_at());
         p.setSlug(ni.getSlug());
         p.setType(ni.getType());

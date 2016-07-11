@@ -26,6 +26,7 @@ import net.glassstones.thediarymagazine.network.models.PostEvent;
 import net.glassstones.thediarymagazine.network.models.WPMedia;
 import net.glassstones.thediarymagazine.ui.activities.NewsDetailsActivity;
 import net.glassstones.thediarymagazine.ui.adapters.FlipAdapter;
+import net.glassstones.thediarymagazine.utils.HelperSharedPreferences;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -38,7 +39,6 @@ import java.util.List;
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import co.kaush.core.util.CoreNullnessUtils;
-import io.realm.Realm;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscription;
@@ -60,8 +60,6 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     FlipAdapter mAdapter;
 
     List<NI> posts;
-
-    Realm realm;
     TDMAPIClient client;
 
     CompositeSubscription subscriptions;
@@ -76,11 +74,9 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     @Override
     public void onCreate (@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.e(TAG, "On Create");
-        realm = Realm.getDefaultInstance();
+        Log.e(TAG, "On Create with "+ getPostsListFromSP(NI.POST_LIST_PARCEL_KEY).size()+" posts");
         client = ServiceGenerator.createGithubService();
         posts = new ArrayList<>();
-
     }
 
     @Override
@@ -100,29 +96,12 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     @Override
     public void onViewCreated (View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-
-
         mAdapter = new FlipAdapter(getActivity(), posts);
         mAdapter.setCallback(this);
         list.setAdapter(mAdapter);
         list.setOnFlipListener(this);
         list.setOnOverFlipListener(this);
         list.setOverFlipMode(OverFlipMode.RUBBER_BAND);
-    }
-
-    @Override
-    public void onActivityCreated (Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-        if (savedInstanceState != null &&
-                CoreNullnessUtils.isNotNullOrEmpty(savedInstanceState.getString(NI.POST_LIST_PARCEL_KEY))) {
-            Gson gson = new Gson();
-            Type listType = new TypeToken<List<NI>>() {
-            }.getType();
-            String dataGotFromServer = savedInstanceState.getString(NI.POST_LIST_PARCEL_KEY);
-            posts = gson.fromJson(dataGotFromServer, listType);
-            mAdapter.update(posts);
-        }
     }
 
     @Override
@@ -139,17 +118,22 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
             progress.setVisibility(View.GONE);
         }
 
-        Subscription postSub = client.getObservablePosts(25, null, 1, null)
+        Observable<List<NI>> postsObservable = client.getObservablePosts(CoreNullnessUtils.isNotNullOrEmpty(posts) ? posts.size()
+                : 25, null, 1, null)
                 .flatMap(Observable::from)
                 .flatMap(this::getPairObservable)
                 .flatMap(this::getObservable)
-                .toList()
+                .toList();
+
+        Subscription postSub = Observable
+                .concat(getPostSPObservable(NI.POST_LIST_PARCEL_KEY), postsObservable)
+                .first()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<List<NI>>() {
                     @Override
                     public void onCompleted () {
-                        Log.e(TAG, "Done!");
+
                     }
 
                     @Override
@@ -165,21 +149,13 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
                         if (posts.size() > 0 && progress.getVisibility() == View.VISIBLE) {
                             progress.setVisibility(View.GONE);
                         }
+                        HelperSharedPreferences.putSharedPreferencesString(getActivity(),
+                                NI.POST_LIST_PARCEL_KEY, getJsonString(posts));
                         mAdapter.update(posts);
                     }
                 });
         subscriptions = new CompositeSubscription();
         subscriptions.add(postSub);
-    }
-
-    @Override
-    public void onSaveInstanceState (Bundle outState) {
-        super.onSaveInstanceState(outState);
-        Gson gson = new Gson();
-        Type listType = new TypeToken<List<NI>>() {
-        }.getType();
-        String dataGotFromServer = gson.toJson(posts, listType);
-        outState.putString(NI.POST_LIST_PARCEL_KEY, dataGotFromServer);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
@@ -239,8 +215,9 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
 
                     @Override
                     public void onNext (NI ni) {
-                        Log.e(TAG, ni.getTitle().title());
                         posts.add(ni);
+                        HelperSharedPreferences.putSharedPreferencesString(getActivity(),
+                                NI.POST_LIST_PARCEL_KEY, getJsonString(posts));
                         mAdapter.add();
                         mAdapter.notifyDataSetChanged();
                     }
@@ -275,6 +252,25 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     private Observable<? extends Pair<NI, WPMedia>> getPairObservable (NI ni) {
         Observable<WPMedia> media = client.getMediaObservable(ni.getFeatured_media());
         return Observable.zip(Observable.just(ni), media, Pair::new);
+    }
+
+    @NonNull
+    private Observable<? extends List<NI>> getPostSPObservable(String key) {
+        return Observable.just(getPostsListFromSP(key));
+    }
+
+    private String getJsonString(List<? extends NI> posts){
+        Gson gson = new Gson();
+        Type listType = new TypeToken<List<NI>>() {
+        }.getType();
+        return gson.toJson(posts, listType);
+    }
+
+    private List<NI> getPostsListFromSP(String key) {
+        Gson gson = new Gson();
+        Type listType = new TypeToken<List<NI>>() {
+        }.getType();
+        return gson.fromJson(HelperSharedPreferences.getSharedPreferencesString(getActivity(), key, "[]"), listType);
     }
 
 
