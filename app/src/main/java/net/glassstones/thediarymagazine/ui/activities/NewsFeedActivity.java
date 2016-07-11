@@ -1,13 +1,11 @@
 package net.glassstones.thediarymagazine.ui.activities;
 
-import android.content.ComponentName;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -20,15 +18,6 @@ import net.glassstones.thediarymagazine.BuildConfig;
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.common.BaseActivity;
-import net.glassstones.thediarymagazine.network.NetworkOperations;
-import net.glassstones.thediarymagazine.network.TDMAPIClient;
-import net.glassstones.thediarymagazine.network.models.NI;
-import net.glassstones.thediarymagazine.network.models.Post;
-import net.glassstones.thediarymagazine.network.models.PostEvent;
-import net.glassstones.thediarymagazine.network.Request;
-import net.glassstones.thediarymagazine.network.ServiceGenerator;
-import net.glassstones.thediarymagazine.services.UpdateLocalPostsImageService;
-import net.glassstones.thediarymagazine.services.UpdateLocalPostsService;
 import net.glassstones.thediarymagazine.ui.adapters.MyFragmentAdapter;
 import net.glassstones.thediarymagazine.ui.fragments.DashboardFragment;
 import net.glassstones.thediarymagazine.ui.fragments.NewsFragment;
@@ -37,32 +26,17 @@ import net.glassstones.thediarymagazine.ui.fragments.UnderConstructionFragment;
 import net.glassstones.thediarymagazine.utils.HelperSharedPreferences;
 import net.glassstones.thediarymagazine.utils.RealmUtils;
 
-import org.greenrobot.eventbus.EventBus;
-
-import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.InjectView;
-import io.realm.Realm;
-import me.tatarka.support.job.JobInfo;
-import me.tatarka.support.job.JobScheduler;
-import me.tatarka.support.os.PersistableBundle;
-import retrofit2.Call;
-import retrofit2.Response;
 
 
-public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmInterface,
-        NetworkOperations {
-
-    private static final int FETCH_JOB_ID = 100;
-    private static final int FETCH_IMAGE_JOB_ID = 200;
+public class NewsFeedActivity extends BaseActivity {
     @InjectView(R.id.menu_tab)
     TabLayout mTabLayout;
     @InjectView(R.id.pager)
     ViewPager mPager;
-    Realm realm;
     RealmUtils realmUtils;
-    private JobScheduler jobScheduler;
     private int[] tabIcons = {
             R.drawable.ic_home,
             R.drawable.ic_dashboard,
@@ -127,9 +101,6 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
             doSplash();
         } else {
             init();
-            jobScheduler = JobScheduler.getInstance(this);
-            constructFetchJob();
-            constructImageFetchJob();
 
             final com.avocarrot.androidsdk.AvocarrotCustom avocarrotCustom =
                     new com.avocarrot.androidsdk.AvocarrotCustom(
@@ -167,21 +138,6 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
                     super.onAdImpression();
                 }
             });
-            ServiceGenerator sg = new ServiceGenerator((Common) getApplication());
-
-            TDMAPIClient client = sg.createService(TDMAPIClient.class);
-
-            Call<ArrayList<NI>> call = client.getPosts(100, 1, null);
-
-            Request request = new Request(call);
-
-            request.setCallback(this);
-
-            request.execute();
-
-            realm = Realm.getDefaultInstance();
-
-            realmUtils = new RealmUtils(realm, this);
         }
     }
 
@@ -224,28 +180,6 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
         setupTabIcons();
     }
 
-    private void constructFetchJob () {
-        PersistableBundle bundle = new PersistableBundle();
-        JobInfo.Builder builder = new JobInfo.Builder(FETCH_JOB_ID,
-                new ComponentName(this, UpdateLocalPostsService.class));
-        builder.setPeriodic(3600000)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setExtras(bundle)
-                .setPersisted(true);
-        jobScheduler.schedule(builder.build());
-    }
-
-    private void constructImageFetchJob () {
-        PersistableBundle bundle = new PersistableBundle();
-        JobInfo.Builder builder = new JobInfo.Builder(FETCH_IMAGE_JOB_ID,
-                new ComponentName(this, UpdateLocalPostsImageService.class));
-        builder.setPeriodic(300000)
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setExtras(bundle)
-                .setPersisted(true);
-        jobScheduler.schedule(builder.build());
-    }
-
     private void setupViewPager (ViewPager mPager) {
         MyFragmentAdapter adapter = new MyFragmentAdapter(getSupportFragmentManager());
         adapter.addFrag(new NewsFragment());
@@ -272,45 +206,5 @@ public class NewsFeedActivity extends BaseActivity implements RealmUtils.RealmIn
         mTabLayout.getTabAt(2).setIcon(defaultTabIcons[2]);
         mTabLayout.getTabAt(3).setIcon(defaultTabIcons[3]);
         mTabLayout.getTabAt(4).setIcon(defaultTabIcons[4]);
-    }
-
-    @Override
-    public void realmChange (Post post) {
-        EventBus.getDefault().post(new PostEvent()
-                .id(post.getId())
-                .type(PostEvent.SINGLE_POST)
-                .status(PostEvent.SAVED)
-        );
-    }
-
-    @Override
-    public void realmChange (List<NI> p) {
-        for (NI pos : p) {
-            Post post = realmUtils.getPost(Post.ID, pos.getId());
-            realmUtils.updatePost(pos, post);
-        }
-    }
-
-    @Override
-    public void postSaveFailed (Post post, Throwable t) {
-
-    }
-
-    @Override
-    public void onPostResponse (Response<ArrayList<NI>> response) {
-        List<NI> posts = response.body();
-        List<Post> rPosts = new ArrayList<>();
-        for (NI p : posts) {
-            Post post = realmUtils.NI2Post(p, null);
-            if (post != null) {
-                rPosts.add(post);
-            }
-        }
-        realmUtils.savePosts(posts, rPosts);
-    }
-
-    @Override
-    public void onPostRequestFailure (Throwable t) {
-        Log.e(TAG, t.getMessage() + "");
     }
 }

@@ -124,10 +124,26 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
                 .flatMap(this::getPairObservable)
                 .flatMap(this::getObservable)
                 .toList();
+        subscriptions = new CompositeSubscription();
 
-        Subscription postSub = Observable
-                .concat(getPostSPObservable(NI.POST_LIST_PARCEL_KEY), postsObservable)
-                .first()
+        if (CoreNullnessUtils.isNullOrEmpty(getPostsListFromSP(NI.POST_LIST_PARCEL_KEY))) {
+            Subscription postSub = getSubscription(postsObservable);
+            subscriptions.add(postSub);
+        } else {
+            if (progress.getVisibility() == View.VISIBLE) {
+                progress.setVisibility(View.GONE);
+            }
+
+            posts = getPostsListFromSP(NI.POST_LIST_PARCEL_KEY);
+
+            mAdapter.update(posts);
+        }
+    }
+
+    private Subscription getSubscription (Observable<List<NI>> postsObservable) {
+        return postsObservable
+                .retry()
+                .distinct()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<List<NI>>() {
@@ -154,8 +170,6 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
                         mAdapter.update(posts);
                     }
                 });
-        subscriptions = new CompositeSubscription();
-        subscriptions.add(postSub);
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
