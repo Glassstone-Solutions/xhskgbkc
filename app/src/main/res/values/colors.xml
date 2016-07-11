@@ -12,4 +12,5 @@
     <color name="secondaryColorDark">#e0e0e0</color>
     <color name="avoLightGray">#efefef</color>
     <color name="colorBackground">#f9f9f9</color>
+    <color name="scrim">#45000000</color>
 </resources>

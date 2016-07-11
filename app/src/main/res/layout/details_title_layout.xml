@@ -15,31 +15,32 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginBottom="8dp"
         android:layout_marginTop="@dimen/activity_horizontal_margin"
-        android:textAlignment="center"
         android:textAppearance="@style/TextAppearance.AppCompat.Title"
-        android:textColor="@color/colorSource"
-        android:textSize="24sp"
-        app:font="@string/fira"
-        app:textStyle="@integer/font_style_extra_bold"/>
+        android:textColor="@android:color/black"
+        android:textSize="20sp"
+        app:font="@string/montserrat"/>
 
     <net.glassstones.thediarymagazine.ui.widgets.CustomTextView
         android:id="@+id/source"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:text="Source"
+        android:text="By Thompson Edolo"
+        android:textAppearance="@style/TextAppearance.AppCompat.Body1"
         android:textColor="@android:color/black"
+        android:drawableStart="@drawable/ic_pencil"
+        android:drawablePadding="8dp"
         android:textSize="14sp"
-        app:font="@string/fira"/>
+        app:font="@string/geometria"/>
 
     <net.glassstones.thediarymagazine.ui.widgets.CustomTextView
         android:id="@+id/timestamp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
         android:text="Timestamp"
-        android:textColor="@android:color/black"
+        android:drawableStart="@drawable/ic_schedule"
+        android:drawablePadding="8dp"
+        android:textColor="@android:color/darker_gray"
         android:textSize="12sp"
-        app:font="@string/fira"/>
+        app:font="@string/geometria"/>
 
 </LinearLayout>

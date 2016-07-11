@@ -38,7 +38,7 @@
             android:textAppearance="@style/TextAppearance.AppCompat.Title"
             android:textColor="@color/colorSource"
             android:textSize="18sp"
-            app:font="@string/fira"/>
+            app:font="@string/montserrat"/>
 
         <net.glassstones.thediarymagazine.ui.widgets.CustomTextView
             android:id="@+id/txtBody1"

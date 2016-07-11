@@ -94,9 +94,6 @@
     <string name="filter_title_view">View</string>
     <string name="desc_splash">Splash</string>
     <string name="demo_txt_body">Lorem Ipsum er rett og slett dummytekst fra og for trykkeindustrien. Lorem Ipsum har vært bransjens standard for dummytekst helt siden 1500-tallet.</string>
-    <string name="fira">fira</string>
-    <string name="geometria">Geometria</string>
-    <string name="font_name_fontawesome">fontawesome</string>
     <string name="view_more">View More</string>
     <string name="title_activity_news_details">NewsDetailsActivity</string>
     <string name="action_share">Share</string>
@@ -104,6 +101,10 @@
     <string name="title_activity_category">Category</string>
     <string name="source_placeholder">Source</string>
 
+    <string name="fira">fira</string>
+    <string name="geometria">Geometria</string>
+    <string name="montserrat">montserrat</string>
+    <string name="font_name_fontawesome">fontawesome</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

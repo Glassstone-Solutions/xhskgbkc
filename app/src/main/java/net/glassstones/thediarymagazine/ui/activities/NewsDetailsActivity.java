@@ -80,10 +80,9 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
 
     TDMAPIClient client;
 
-    Window window;
-    Post post;
-    Realm realm;
-    RealmUtils realmUtils;
+    private Window window;
+    private Post post;
+    private RealmUtils realmUtils;
     @InjectView(R.id.news)
     RecyclerView newsView;
 
@@ -112,7 +111,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
             getWindow().setStatusBarColor(ContextCompat.getColor(this, R.color.colorPrimaryDark));
         }
 
-        realm = Realm.getDefaultInstance();
+        Realm realm = Realm.getDefaultInstance();
 
         realmUtils = new RealmUtils(realm, this);
 

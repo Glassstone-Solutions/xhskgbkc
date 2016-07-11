@@ -15,6 +15,7 @@ import net.glassstones.thediarymagazine.network.models.News;
 import net.glassstones.thediarymagazine.ui.viewholders.DetailsParagraphViewHolder;
 import net.glassstones.thediarymagazine.ui.viewholders.DetailsTitleViewHolder;
 import net.glassstones.thediarymagazine.ui.widgets.CustomTextView;
+import net.glassstones.thediarymagazine.utils.FontCache;
 
 import org.jsoup.nodes.Element;
 
@@ -66,7 +67,8 @@ public class NewsDetailAdapter extends RecyclerView.Adapter {
                             LinearLayout.LayoutParams.WRAP_CONTENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
                     ));
-                    tv1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
+                    tv1.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                    tv1.setTypeface(FontCache.getTypeface("fonts/" + "MONTSERRAT_EXTRABOLD.otf",context));
                     root.addView(tv1);
                 }
             }
@@ -78,7 +80,8 @@ public class NewsDetailAdapter extends RecyclerView.Adapter {
                             LinearLayout.LayoutParams.WRAP_CONTENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
                     ));
-                    tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+                    tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+                    tv.setTypeface(FontCache.getTypeface("fonts/" + "MONTSERRAT_EXTRABOLD.otf",context));
                     root.addView(tv);
                 }
             }
@@ -91,7 +94,7 @@ public class NewsDetailAdapter extends RecyclerView.Adapter {
         CustomTextView timestamp = vh.getTimestamp();
 
         title.setText(Html.fromHtml(news.getTitle()));
-        source.setText(R.string.source_placeholder);
+//        source.setText(R.string.source_placeholder);
         timestamp.setText(news.getDate());
     }
 

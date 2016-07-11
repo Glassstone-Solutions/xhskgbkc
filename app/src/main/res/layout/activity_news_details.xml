@@ -23,16 +23,27 @@
             app:contentScrim="?attr/colorPrimary"
             app:expandedTitleMarginEnd="64dp"
             app:expandedTitleMarginStart="48dp"
-            app:layout_scrollFlags="scroll">
+            app:layout_scrollFlags="scroll|exitUntilCollapsed">
 
-            <net.glassstones.thediarymagazine.ui.widgets.TopAlignedImageView
-                android:id="@+id/header"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:contentDescription="@string/desc_splash"
-                android:fitsSystemWindows="true"
-                android:scaleType="matrix"
-                app:layout_collapseMode="parallax"/>
+                android:layout_height="match_parent">
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/scrim"/>
+
+                <net.glassstones.thediarymagazine.ui.widgets.TopAlignedImageView
+                    android:id="@+id/header"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@string/desc_splash"
+                    android:fitsSystemWindows="true"
+                    android:scaleType="matrix"
+                    app:layout_collapseMode="parallax"/>
+            </FrameLayout>
+
 
             <android.support.v7.widget.Toolbar
                 android:id="@+id/anim_toolbar"

@@ -87,6 +87,27 @@ public class CustomFontUtils {
                 default:
                     return FontCache.getTypeface("fonts/" + "Geometria_Light.otf", context);
             }
+        } else if (fontName.contentEquals(context.getString(R.string.montserrat))){
+            switch (textStyle) {
+                case Typeface.BOLD: // bold
+                    return FontCache.getTypeface("fonts/" + "MONTSERRAT_BOLD.otf", context);
+
+                case Typeface.ITALIC: // italic
+                    return FontCache.getTypeface("fonts/" + "MONTSERRAT_LIGHT.otf", context);
+
+                case Typeface.BOLD_ITALIC: // bold italic
+                    return FontCache.getTypeface("fonts/" + "MONTSERRAT_LIGHT.otf", context);
+
+                case 10: // extra light, equals @integer/font_style_extra_light
+                    return FontCache.getTypeface("fonts/" + "MONTSERRAT_ULTRALIGHT.otf", context);
+
+                case 11: // extra bold, equals @integer/font_style_extra_bold
+                    return FontCache.getTypeface("fonts/" + "MONTSERRAT_EXTRABOLD.otf", context);
+
+                case Typeface.NORMAL: // regular
+                default:
+                    return FontCache.getTypeface("fonts/" + "MONTSERRAT_REGULAR.otf", context);
+            }
         }else{
                 // no matching font found
                 // return null so Android just uses the standard font (Roboto)
