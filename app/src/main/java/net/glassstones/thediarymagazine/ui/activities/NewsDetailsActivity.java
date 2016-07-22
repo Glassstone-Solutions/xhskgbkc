@@ -187,6 +187,7 @@ public class NewsDetailsActivity extends BaseActivity implements RealmUtils.Real
             Glide.with(getApplicationContext())
                     .load(source)
                     .asBitmap()
+                    .fitCenter()
                     .into(new SimpleTarget<Bitmap>(myWidth, myHeight) {
                         @Override
                         public void onResourceReady (Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {

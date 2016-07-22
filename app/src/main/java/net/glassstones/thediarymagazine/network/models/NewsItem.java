@@ -5,25 +5,9 @@ package net.glassstones.thediarymagazine.network.models;
  * For The Diary Magazine
  */
 public class NewsItem {
-    String imageUrl;
-
-    NI post;
-
     NI ni;
 
     public NewsItem() {
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public NI getPost() {
-        return post;
-    }
-
-    public void setPost(NI post) {
-        this.post = post;
     }
 
     public NI getNi () {

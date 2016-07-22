@@ -5,8 +5,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.View;
 
-import com.google.android.gms.analytics.HitBuilders;
-import com.google.android.gms.analytics.Tracker;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.network.models.NewsCluster;
@@ -25,7 +24,7 @@ public abstract class BaseNewsFragment extends BaseFragment {
 
     public abstract Class clazz();
 
-    Tracker mTracker;
+    FirebaseAnalytics mTracker;
 
     Common app;
 
@@ -41,9 +40,12 @@ public abstract class BaseNewsFragment extends BaseFragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         app = (Common) getActivity().getApplication();
-        mTracker = app.getDefaultTracker();
-        mTracker.setScreenName(TAG);
-        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
+        mTracker = app.getmFirebaseAnalytics();
+        Bundle bundle = new Bundle();
+        bundle.putString(FirebaseAnalytics.Param.ITEM_ID, TAG);
+        bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, TAG);
+        bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "SCREEN_HIT");
+        mTracker.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
     }
 
     @Override

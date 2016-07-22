@@ -1,35 +1,47 @@
 {
   "project_info": {
-    "project_number": "478695949457",
-    "project_id": "api-project-478695949457"
+    "project_number": "990930822625",
+    "firebase_url": "https://the-diary-magazine.firebaseio.com",
+    "project_id": "the-diary-magazine",
+    "storage_bucket": "the-diary-magazine.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:478695949457:android:2e0be5e5916198e4",
+        "mobilesdk_app_id": "1:990930822625:android:2e0be5e5916198e4",
         "android_client_info": {
           "package_name": "net.glassstones.thediarymagazine"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "990930822625-lcf3skdbgom3mmj5nhq68e85sivhvtcc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "net.glassstones.thediarymagazine",
+            "certificate_hash": "F5971F023E397E9EA85C544A432C7462E7EF3C9B"
+          }
+        },
+        {
+          "client_id": "990930822625-iebojspklj44q4iqq4eij505b9q8lpfd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyCO9G9doucSilCt0t2QBPrDJtWi6kLFHNQ"
+          "current_key": "AIzaSyBYc2TZUmN88hPf3tYggk0G42hG9HBEcQk"
         }
       ],
       "services": {
         "analytics_service": {
-          "status": 2,
-          "analytics_property": {
-            "tracking_id": "UA-71604058-2"
-          }
+          "status": 1
         },
         "appinvite_service": {
           "status": 1,
           "other_platform_oauth_client": []
         },
         "ads_service": {
-          "status": 1
+          "status": 2
         }
       }
     }

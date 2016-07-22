@@ -1,6 +1,5 @@
 package net.glassstones.thediarymagazine;
 
-import android.app.Application;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.support.multidex.MultiDexApplication;
@@ -8,9 +7,8 @@ import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.airbnb.deeplinkdispatch.DeepLinkHandler;
-import com.google.android.gms.analytics.ExceptionReporter;
-import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.squareup.leakcanary.LeakCanary;
 import com.squareup.leakcanary.RefWatcher;
 
@@ -18,7 +16,6 @@ import net.glassstones.thediarymagazine.common.receivers.DeepLinkReceiver;
 import net.glassstones.thediarymagazine.network.models.NI;
 import net.glassstones.thediarymagazine.network.models.NewsCluster;
 import net.glassstones.thediarymagazine.network.models.NewsItem;
-import net.glassstones.thediarymagazine.network.models.Post;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,41 +34,33 @@ public class Common extends MultiDexApplication {
     private static final String TAG = Common.class.getSimpleName();
 
     public static volatile Context applicationContext;
+    private static Common instance;
     private Tracker mTracker;
     private RefWatcher _refWatcher;
-    private static Common instance;
+    private FirebaseAnalytics mFirebaseAnalytics;
 
-    public static Common get(){
-        return instance;
-    }
-
-    public static RefWatcher getRefWatcher() {
+    public static RefWatcher getRefWatcher () {
         return Common.get()._refWatcher;
     }
 
-    public static List<NewsCluster> getNewsCluster (Realm realm) {
-        List<Post> p = realm.where(Post.class).findAll();
-        final List<NewsItem> items = getDemoNews(p);
+    public static Common get () {
+        return instance;
+    }
 
+    public static List<NewsCluster> getNICluster (List<NI> list) {
+        List<NewsItem> items = getNewsList(list);
         return getNewsCluster(items);
     }
 
-    private static List<NewsItem> getDemoNews (List<Post> posts) {
+    private static List<NewsItem> getNewsList (List<NI> ni) {
+        Log.e(TAG, "Tab flip adapter initialized with "+ni.size()+" clusters.");
         List<NewsItem> list = new ArrayList<>();
-        for (int i = 0; i < posts.size(); i++) {
-            NewsItem item = new NewsItem();
-//            item.setPost(posts.get(i));
-//            list.add(item);
-        }
-        return list;
-    }
-
-    private static List<NewsItem> getNewsList(List<NI> ni){
-        List<NewsItem> list = new ArrayList<>();
-        for (int i = 0; i < ni.size(); i++){
+        for (int i = 0; i < ni.size(); i++) {
             NewsItem item = new NewsItem();
             item.setNi(ni.get(i));
+            list.add(item);
         }
+        Log.e(TAG, "Tab flip adapter initialized with "+list.size()+" clusters.");
         return list;
     }
 
@@ -117,14 +106,8 @@ public class Common extends MultiDexApplication {
         return cluster;
     }
 
-    public static List<NewsCluster> getPostsCluster (List<Post> posts) {
-        final List<NewsItem> items = getDemoNews(posts);
-        return getNewsCluster(items);
-    }
-
-    public static List<NewsCluster> getNICluster (List<NI> list){
-        List<NewsItem> items = getNewsList(list);
-        return getNewsCluster(items);
+    public static Common getApp (Context context) {
+        return (Common) context.getApplicationContext();
     }
 
     @Override
@@ -134,14 +117,6 @@ public class Common extends MultiDexApplication {
         applicationContext = getApplicationContext();
 
         instance = (Common) getApplicationContext();
-
-        Thread.UncaughtExceptionHandler myHandler = new ExceptionReporter(
-                this.getDefaultTracker(),
-                Thread.getDefaultUncaughtExceptionHandler(),
-                this);
-
-        // Make myHandler the new default uncaught exception handler.
-        Thread.setDefaultUncaughtExceptionHandler(myHandler);
 
         IntentFilter intentFilter = new IntentFilter(DeepLinkHandler.ACTION);
         LocalBroadcastManager.getInstance(this).registerReceiver(new DeepLinkReceiver(), intentFilter);
@@ -153,31 +128,12 @@ public class Common extends MultiDexApplication {
 
         Realm.setDefaultConfiguration(config);
 
+        // Obtain the FirebaseAnalytics instance.
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
+
     }
 
-    /**
-     * Gets the default {@link Tracker} for this {@link Application}.
-     *
-     * @return tracker
-     */
-    synchronized public Tracker getDefaultTracker () {
-        if (mTracker == null) {
-            GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
-            // To enable debug logging use: adb shell setprop log.tag.GAv4 DEBUG
-            mTracker = analytics.newTracker(R.xml.global_tracker);
-            mTracker.enableAdvertisingIdCollection(true);
-        }
-        return mTracker;
-    }
-
-    public static Common getApp(Context context) {
-        return (Common) context.getApplicationContext();
-    }
-
-    public static List<NewsCluster> getNewsCluster (Realm realm, int category) {
-        List<Post> p = realm.where(Post.class).equalTo("categories.id", category).findAll();
-        final List<NewsItem> items = getDemoNews(p);
-
-        return getNewsCluster(items);
+    synchronized public FirebaseAnalytics getmFirebaseAnalytics(){
+        return mFirebaseAnalytics;
     }
 }

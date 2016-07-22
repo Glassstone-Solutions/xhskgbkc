@@ -1,6 +1,7 @@
 package net.glassstones.thediarymagazine.ui.adapters;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -12,8 +13,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.google.android.gms.analytics.HitBuilders;
-import com.google.android.gms.analytics.Tracker;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
@@ -25,6 +25,7 @@ import net.glassstones.thediarymagazine.network.models.NewsItem;
 import net.glassstones.thediarymagazine.ui.widgets.CustomTextView;
 
 import java.util.List;
+import java.util.Random;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -39,11 +40,13 @@ public class FlipAdapter extends BaseAdapter {
     private List<NI> items;
     private LayoutInflater inflater;
     private Callback callback;
-    private Tracker mTracker;
+    private FirebaseAnalytics mTracker;
 
     private int itemPosition = -1;
 
     private int key = 25;
+
+    private int adskey = 0;
 
     public FlipAdapter (Context mContext, List<NI> posts) {
         this.mContext = mContext;
@@ -58,7 +61,7 @@ public class FlipAdapter extends BaseAdapter {
 
         TDMAPIClient client = sg.createService(TDMAPIClient.class);
 
-        mTracker = ((Common) mContext.getApplicationContext()).getDefaultTracker();
+        mTracker = ((Common) mContext.getApplicationContext()).getmFirebaseAnalytics();
     }
 
     public void setCallback (Callback callback) {
@@ -96,11 +99,8 @@ public class FlipAdapter extends BaseAdapter {
     }
 
     private void bindView (int position, ViewHolder v) {
-
-        if (items.size() - position == 5 && key == 25) {
-            callback.onMoreRequest(items.size());
-            key = 0;
-        }
+        // Load more and show ads
+        loadMoreAndShowAds(position);
 
         NI p = items.get(position);
         Headline vh = (Headline) v;
@@ -115,6 +115,22 @@ public class FlipAdapter extends BaseAdapter {
         vh.getRoot().setOnClickListener((v1 -> clickHandler(v1, p)));
     }
 
+    private void loadMoreAndShowAds (int position) {
+        if (items.size() - position == 5 && key == 25) {
+            callback.onMoreRequest(items.size());
+            if (adskey > 1) {
+                int pos;
+                Random rand = new Random();
+                pos = rand.nextInt(3) + 1;
+                if (pos == 2) {
+                    callback.onShowAd();
+                }
+            }
+            adskey++;
+            key = 0;
+        }
+    }
+
     private void setImage (NI p, ImageView i) {
         Glide.with(mContext).load(p.getMedia().getSourceUrl()).into(i);
     }
@@ -125,10 +141,11 @@ public class FlipAdapter extends BaseAdapter {
             NewsItem ni = new NewsItem();
             ni.setNi(p);
             callback.onPageRequested(ni);
-            mTracker.send(new HitBuilders.EventBuilder()
-                    .setCategory("Action")
-                    .setAction("Read_Post")
-                    .build());
+            Bundle bundle = new Bundle();
+            bundle.putString(FirebaseAnalytics.Param.ITEM_ID, String.valueOf(p.getId()));
+            bundle.putString(FirebaseAnalytics.Param.ITEM_NAME, p.getTitle().title());
+            bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "POST_CLICK");
+            mTracker.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
         }
     }
 

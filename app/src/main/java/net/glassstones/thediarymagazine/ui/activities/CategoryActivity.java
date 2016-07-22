@@ -25,6 +25,7 @@ import net.glassstones.thediarymagazine.network.models.NI;
 import net.glassstones.thediarymagazine.network.models.NewsItem;
 import net.glassstones.thediarymagazine.network.models.WPMedia;
 import net.glassstones.thediarymagazine.ui.adapters.FlipAdapter;
+import net.glassstones.thediarymagazine.ui.widgets.CustomTextView;
 import net.glassstones.thediarymagazine.utils.HelperSharedPreferences;
 
 import java.lang.reflect.Type;
@@ -63,6 +64,8 @@ public class CategoryActivity extends AppCompatActivity implements
     Call<WPMedia> getMedia;
     List<NI> posts;
 
+    CustomTextView mLabel;
+
     CompositeSubscription subscriptions;
     Subscription moreSub;
 
@@ -81,9 +84,12 @@ public class CategoryActivity extends AppCompatActivity implements
 
         assert getSupportActionBar() != null;
 
-        getSupportActionBar().setDisplayShowTitleEnabled(true);
-        getSupportActionBar().setTitle(Constants.CATEGOIRES[category]);
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+        mLabel = (CustomTextView) toolbar.findViewById(R.id.title);
+        mLabel.setText(CoreNullnessUtils.isNotNullOrEmpty(Constants.CATEGOIRES[category])
+                ? Constants.CATEGOIRES[category] : "News");
 
         subscriptions = new CompositeSubscription();
 
@@ -222,6 +228,11 @@ public class CategoryActivity extends AppCompatActivity implements
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(getObserver());
         subscriptions.add(moreSub);
+    }
+
+    @Override
+    public void onShowAd () {
+
     }
 
     @NonNull

@@ -1,6 +1,7 @@
 package net.glassstones.thediarymagazine.ui.fragments;
 
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -15,17 +16,20 @@ import android.widget.ProgressBar;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.common.BaseNewsFragment;
 import net.glassstones.thediarymagazine.network.Callback;
 import net.glassstones.thediarymagazine.network.ServiceGenerator;
 import net.glassstones.thediarymagazine.network.TDMAPIClient;
 import net.glassstones.thediarymagazine.network.models.NI;
+import net.glassstones.thediarymagazine.network.models.NewsCluster;
 import net.glassstones.thediarymagazine.network.models.NewsItem;
 import net.glassstones.thediarymagazine.network.models.PostEvent;
 import net.glassstones.thediarymagazine.network.models.WPMedia;
 import net.glassstones.thediarymagazine.ui.activities.NewsDetailsActivity;
 import net.glassstones.thediarymagazine.ui.adapters.FlipAdapter;
+import net.glassstones.thediarymagazine.ui.adapters.TabFlipAdapter;
 import net.glassstones.thediarymagazine.utils.HelperSharedPreferences;
 
 import org.greenrobot.eventbus.EventBus;
@@ -35,6 +39,7 @@ import org.greenrobot.eventbus.ThreadMode;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -59,13 +64,27 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
 
     FlipAdapter mAdapter;
 
+    TabFlipAdapter mTabAdapter;
+
     List<NI> posts;
+    List<NI> _posts;
+    List<NewsCluster> clusters;
     TDMAPIClient client;
+
+    private boolean isTablet;
 
     CompositeSubscription subscriptions;
     Subscription moreSub;
     @InjectView(R.id.progress)
     ProgressBar progress;
+
+    private NewsFeedFragmentInteraction callback;
+
+    @Override
+    public void onAttach (Context context) {
+        super.onAttach(context);
+        callback = (NewsFeedFragmentInteraction) context;
+    }
 
     public NewsFragment () {
         // Required empty public constructor
@@ -77,6 +96,9 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
         Log.e(TAG, "On Create with "+ getPostsListFromSP(NI.POST_LIST_PARCEL_KEY).size()+" posts");
         client = ServiceGenerator.createGithubService();
         posts = new ArrayList<>();
+        _posts = new ArrayList<>();
+        clusters = new ArrayList<>();
+        isTablet = getActivity().getResources().getBoolean(R.bool.isTablet);
     }
 
     @Override
@@ -96,9 +118,16 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     @Override
     public void onViewCreated (View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mAdapter = new FlipAdapter(getActivity(), posts);
-        mAdapter.setCallback(this);
-        list.setAdapter(mAdapter);
+        if (!isTablet) {
+            mAdapter = new FlipAdapter(getActivity(), posts);
+            mAdapter.setCallback(this);
+            list.setAdapter(mAdapter);
+        } else {
+            clusters = Common.getNICluster(posts);
+            mTabAdapter = new TabFlipAdapter(getActivity(), clusters);
+            mTabAdapter.setCallback(this);
+            list.setAdapter(mTabAdapter);
+        }
         list.setOnFlipListener(this);
         list.setOnOverFlipListener(this);
         list.setOverFlipMode(OverFlipMode.RUBBER_BAND);
@@ -136,7 +165,11 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
 
             posts = getPostsListFromSP(NI.POST_LIST_PARCEL_KEY);
 
-            mAdapter.update(posts);
+            if (!isTablet) {
+                mAdapter.update(posts);
+            } else {
+                mTabAdapter.update(Common.getNICluster(posts));
+            }
         }
     }
 
@@ -167,7 +200,12 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
                         }
                         HelperSharedPreferences.putSharedPreferencesString(getActivity(),
                                 NI.POST_LIST_PARCEL_KEY, getJsonString(posts));
-                        mAdapter.update(posts);
+                        if (!isTablet) {
+                            mAdapter.update(posts);
+                        } else {
+                            clusters = Common.getNICluster(posts);
+                            mTabAdapter.notifyDataSetChanged();
+                        }
                     }
                 });
     }
@@ -232,11 +270,29 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
                         posts.add(ni);
                         HelperSharedPreferences.putSharedPreferencesString(getActivity(),
                                 NI.POST_LIST_PARCEL_KEY, getJsonString(posts));
-                        mAdapter.add();
-                        mAdapter.notifyDataSetChanged();
+                        if (!isTablet) {
+                            mAdapter.add();
+                            mAdapter.notifyDataSetChanged();
+                        } else {
+                            _posts.add(ni);
+                            Random rand = new Random();
+                            int currentCount = rand.nextInt(3) + 1;
+                            if (_posts.size() == currentCount && _posts.size() == 3){
+                                for (NewsCluster nc : Common.getNICluster(_posts)) {
+                                    clusters.add(nc);
+                                }
+                                mTabAdapter.notifyDataSetChanged();
+                                _posts.clear();
+                            }
+                        }
                     }
                 });
         subscriptions.add(moreSub);
+    }
+
+    @Override
+    public void onShowAd () {
+        callback.showAd();
     }
 
     @Override
@@ -285,6 +341,10 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
         Type listType = new TypeToken<List<NI>>() {
         }.getType();
         return gson.fromJson(HelperSharedPreferences.getSharedPreferencesString(getActivity(), key, "[]"), listType);
+    }
+
+    public interface NewsFeedFragmentInteraction{
+        void showAd();
     }
 
 

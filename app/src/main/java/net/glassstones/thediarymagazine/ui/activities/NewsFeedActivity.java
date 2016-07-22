@@ -3,18 +3,22 @@ package net.glassstones.thediarymagazine.ui.activities;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.design.widget.TabLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
-import com.avocarrot.androidsdk.AdError;
-import com.avocarrot.androidsdk.AvocarrotCustomListener;
-import com.avocarrot.androidsdk.CustomModel;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.InterstitialAd;
+import com.google.android.gms.ads.MobileAds;
 
-import net.glassstones.thediarymagazine.BuildConfig;
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.common.BaseActivity;
@@ -26,17 +30,16 @@ import net.glassstones.thediarymagazine.ui.fragments.UnderConstructionFragment;
 import net.glassstones.thediarymagazine.utils.HelperSharedPreferences;
 import net.glassstones.thediarymagazine.utils.RealmUtils;
 
-import java.util.List;
-
 import butterknife.InjectView;
 
 
-public class NewsFeedActivity extends BaseActivity {
+public class NewsFeedActivity extends BaseActivity implements NewsFragment.NewsFeedFragmentInteraction {
     @InjectView(R.id.menu_tab)
     TabLayout mTabLayout;
     @InjectView(R.id.pager)
     ViewPager mPager;
     RealmUtils realmUtils;
+    private InterstitialAd mInterstitialAd;
     private int[] tabIcons = {
             R.drawable.ic_home,
             R.drawable.ic_dashboard,
@@ -52,13 +55,16 @@ public class NewsFeedActivity extends BaseActivity {
             R.drawable.shopping_basket_unselected
     };
 
-    @Override
-    protected void onDestroy () {
-        super.onDestroy();
-        if (realmUtils != null) {
-            realmUtils.closeRealm();
+    // Create the Handler object (on the main thread by default)
+    Handler handler = new Handler(Looper.getMainLooper());
+    // Define the code block to be executed
+    private Runnable runnableCode = new Runnable() {
+        @Override
+        public void run () {
+            showInterstitial();
+            handler.postDelayed(runnableCode, 480000);
         }
-    }
+    };
 
     @Override
     public boolean onCreateOptionsMenu (Menu menu) {
@@ -101,44 +107,17 @@ public class NewsFeedActivity extends BaseActivity {
             doSplash();
         } else {
             init();
-
-            final com.avocarrot.androidsdk.AvocarrotCustom avocarrotCustom =
-                    new com.avocarrot.androidsdk.AvocarrotCustom(
-                            this,                     /* reference to your Activity */
-                            "87d7278ea00dbfe6a1e8afed92ceadc9df3aba91", /* this is your Avocarrot API Key */
-                            "41b30d19c03fa5eb8884d558500598f8a58c69e9" /* this is your Avocarrot Placement Key */
-                    );
-
-            if (BuildConfig.DEBUG) {
-                avocarrotCustom.setSandbox(true);
-                avocarrotCustom.setLogger(true, "ALL");
-            }
-            avocarrotCustom.setListener(new AvocarrotCustomListener() {
-                @Override
-                public void onAdLoaded (List<CustomModel> ads) {
-                    super.onAdLoaded(ads);
-                    super.onAdLoaded(ads);
-                    if ((ads == null) || (ads.size() < 1)) {
-                        return;
-                    }
-                }
-
-                @Override
-                public void onAdError (AdError error) {
-                    super.onAdError(error);
-                }
-
-                @Override
-                public void onAdClicked () {
-                    super.onAdClicked();
-                }
-
-                @Override
-                public void onAdImpression () {
-                    super.onAdImpression();
-                }
-            });
+            initAds();
         }
+    }
+
+    @Override
+    protected void onDestroy () {
+        super.onDestroy();
+        if (realmUtils != null) {
+            realmUtils.closeRealm();
+        }
+        handler.removeCallbacks(runnableCode);
     }
 
     private void doSplash () {
@@ -180,6 +159,24 @@ public class NewsFeedActivity extends BaseActivity {
         setupTabIcons();
     }
 
+    private void initAds () {
+        // Initialize the Mobile Ads SDK.
+        MobileAds.initialize(this, "ca-app-pub-9323445577003464~5537659546");
+
+        // Create the InterstitialAd and set the adUnitId.
+        mInterstitialAd = new InterstitialAd(this);
+        // Defined in res/values/strings.xml
+        mInterstitialAd.setAdUnitId(getString(R.string.ad_unit_id));
+        mInterstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed () {
+                Log.e(TAG, "Ad closed");
+                loadAds();
+            }
+        });
+        handler.post(runnableCode);
+    }
+
     private void setupViewPager (ViewPager mPager) {
         MyFragmentAdapter adapter = new MyFragmentAdapter(getSupportFragmentManager());
         adapter.addFrag(new NewsFragment());
@@ -206,5 +203,28 @@ public class NewsFeedActivity extends BaseActivity {
         mTabLayout.getTabAt(2).setIcon(defaultTabIcons[2]);
         mTabLayout.getTabAt(3).setIcon(defaultTabIcons[3]);
         mTabLayout.getTabAt(4).setIcon(defaultTabIcons[4]);
+    }
+
+    private void loadAds () {
+        // Request a new ad if one isn't already loaded, hide the button, and kick off the timer.
+        if (!mInterstitialAd.isLoading() && !mInterstitialAd.isLoaded()) {
+            AdRequest adRequest = new AdRequest.Builder().build();
+            mInterstitialAd.loadAd(adRequest);
+        }
+    }
+
+    @Override
+    public void showAd () {
+        showInterstitial();
+    }
+
+    private void showInterstitial () {
+        // Show the ad if it's ready. Otherwise toast and restart the game.
+        if (mInterstitialAd != null && mInterstitialAd.isLoaded()) {
+            mInterstitialAd.show();
+        } else {
+            Toast.makeText(this, "Ad did not load", Toast.LENGTH_SHORT).show();
+            loadAds();
+        }
     }
 }
