@@ -13,9 +13,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.common.BaseNewsFragment;
@@ -36,10 +33,10 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -71,10 +68,12 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     List<NewsCluster> clusters;
     TDMAPIClient client;
 
+    boolean isRefreshing = false;
+
     private boolean isTablet;
 
     CompositeSubscription subscriptions;
-    Subscription moreSub;
+    Subscription moreSub, refreshSub;
     @InjectView(R.id.progress)
     ProgressBar progress;
 
@@ -93,7 +92,8 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     @Override
     public void onCreate (@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.e(TAG, "On Create with "+ getPostsListFromSP(NI.POST_LIST_PARCEL_KEY).size()+" posts");
+        Log.e(TAG, "On Create with "+ HelperSharedPreferences.getPostsListFromSP(getActivity(),
+                NI.POST_LIST_PARCEL_KEY).size()+" posts");
         client = ServiceGenerator.createGithubService();
         posts = new ArrayList<>();
         _posts = new ArrayList<>();
@@ -146,6 +146,20 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
         if (posts.size() > 0) {
             progress.setVisibility(View.GONE);
         }
+        if (CoreNullnessUtils.isNotNullOrEmpty(
+                HelperSharedPreferences.getPostsListFromSP(getActivity(), NI.POST_LIST_PARCEL_KEY))) {
+            if (progress.getVisibility() == View.VISIBLE) {
+                progress.setVisibility(View.GONE);
+            }
+
+            posts = HelperSharedPreferences.getPostsListFromSP(getActivity(), NI.POST_LIST_PARCEL_KEY);
+
+            if (!isTablet) {
+                mAdapter.update(posts);
+            } else {
+                mTabAdapter.update(Common.getNICluster(posts));
+            }
+        }
 
         Observable<List<NI>> postsObservable = client.getObservablePosts(CoreNullnessUtils.isNotNullOrEmpty(posts) ? posts.size()
                 : 25, null, 1, null)
@@ -155,22 +169,8 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
                 .toList();
         subscriptions = new CompositeSubscription();
 
-        if (CoreNullnessUtils.isNullOrEmpty(getPostsListFromSP(NI.POST_LIST_PARCEL_KEY))) {
-            Subscription postSub = getSubscription(postsObservable);
-            subscriptions.add(postSub);
-        } else {
-            if (progress.getVisibility() == View.VISIBLE) {
-                progress.setVisibility(View.GONE);
-            }
-
-            posts = getPostsListFromSP(NI.POST_LIST_PARCEL_KEY);
-
-            if (!isTablet) {
-                mAdapter.update(posts);
-            } else {
-                mTabAdapter.update(Common.getNICluster(posts));
-            }
-        }
+        Subscription postSub = getSubscription(postsObservable);
+        subscriptions.add(postSub);
     }
 
     private Subscription getSubscription (Observable<List<NI>> postsObservable) {
@@ -199,7 +199,7 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
                             progress.setVisibility(View.GONE);
                         }
                         HelperSharedPreferences.putSharedPreferencesString(getActivity(),
-                                NI.POST_LIST_PARCEL_KEY, getJsonString(posts));
+                                NI.POST_LIST_PARCEL_KEY, HelperSharedPreferences.getJsonString(posts));
                         if (!isTablet) {
                             mAdapter.update(posts);
                         } else {
@@ -263,28 +263,12 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
                     public void onError (Throwable e) {
                         Log.e(TAG, "Darn! App crapped");
                         e.printStackTrace();
+                        mAdapter.setShouldRequestMore(true);
                     }
 
                     @Override
                     public void onNext (NI ni) {
-                        posts.add(ni);
-                        HelperSharedPreferences.putSharedPreferencesString(getActivity(),
-                                NI.POST_LIST_PARCEL_KEY, getJsonString(posts));
-                        if (!isTablet) {
-                            mAdapter.add();
-                            mAdapter.notifyDataSetChanged();
-                        } else {
-                            _posts.add(ni);
-                            Random rand = new Random();
-                            int currentCount = rand.nextInt(3) + 1;
-                            if (_posts.size() == currentCount && _posts.size() == 3){
-                                for (NewsCluster nc : Common.getNICluster(_posts)) {
-                                    clusters.add(nc);
-                                }
-                                mTabAdapter.notifyDataSetChanged();
-                                _posts.clear();
-                            }
-                        }
+                        setNi(ni);
                     }
                 });
         subscriptions.add(moreSub);
@@ -303,7 +287,64 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     @Override
     public void onOverFlip (FlipView v, OverFlipMode mode, boolean overFlippingPrevious, float
             overFlipDistance, float flipDistancePerPage) {
+        if (!isRefreshing){
+            doRefresh(overFlippingPrevious);
+        }
+    }
 
+    private void doRefresh (boolean overFlippingPrevious) {
+        if (refreshSub != null && !refreshSub.isUnsubscribed())
+            refreshSub.isUnsubscribed();
+        if (mAdapter.getCount() == posts.size() && mAdapter.getItemPosition() == mAdapter.getCount()){
+            refreshSub = Observable.just(overFlippingPrevious)
+                    .debounce(500, TimeUnit.MILLISECONDS)
+                    .take(1)
+                    .filter(direction -> false)
+                    .flatMap(direction -> client.getObservablePosts(25, mAdapter.getCount(), 1, null))
+                    .flatMap(Observable::from)
+                    .flatMap(this::getPairObservable)
+                    .flatMap(this::getObservable)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(new Observer<NI>() {
+                        @Override
+                        public void onCompleted () {
+
+                        }
+
+                        @Override
+                        public void onError (Throwable e) {
+                            mAdapter.setShouldRequestMore(true);
+                        }
+
+                        @Override
+                        public void onNext (NI ni) {
+                            setNi(ni);
+                        }
+                    });
+            subscriptions.add(refreshSub);
+        }
+    }
+
+    private void setNi (NI ni) {
+        posts.add(ni);
+        HelperSharedPreferences.putSharedPreferencesString(getActivity(),
+                NI.POST_LIST_PARCEL_KEY, HelperSharedPreferences.getJsonString(posts));
+        if (!isTablet) {
+            mAdapter.add();
+            mAdapter.notifyDataSetChanged();
+        } else {
+            _posts.add(ni);
+            Random rand = new Random();
+            int currentCount = rand.nextInt(3) + 1;
+            if (_posts.size() == currentCount && _posts.size() == 3){
+                for (NewsCluster nc : Common.getNICluster(_posts)) {
+                    clusters.add(nc);
+                }
+                mTabAdapter.notifyDataSetChanged();
+                _posts.clear();
+            }
+        }
     }
 
     @Override
@@ -325,23 +366,10 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     }
 
     @NonNull
-    private Observable<? extends List<NI>> getPostSPObservable(String key) {
-        return Observable.just(getPostsListFromSP(key));
+    private Observable<? extends List<NI>> getPostSPObservable(Context c, String key) {
+        return Observable.just(HelperSharedPreferences.getPostsListFromSP(c, key));
     }
 
-    private String getJsonString(List<? extends NI> posts){
-        Gson gson = new Gson();
-        Type listType = new TypeToken<List<NI>>() {
-        }.getType();
-        return gson.toJson(posts, listType);
-    }
-
-    private List<NI> getPostsListFromSP(String key) {
-        Gson gson = new Gson();
-        Type listType = new TypeToken<List<NI>>() {
-        }.getType();
-        return gson.fromJson(HelperSharedPreferences.getSharedPreferencesString(getActivity(), key, "[]"), listType);
-    }
 
     public interface NewsFeedFragmentInteraction{
         void showAd();

@@ -10,4 +10,6 @@ public interface Callback {
     void onPageRequested(NewsItem newsItem);
     void onMoreRequest(int offset);
     void onShowAd();
+
+
 }

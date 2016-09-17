@@ -107,5 +107,7 @@
     <string name="font_name_fontawesome">fontawesome</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="ad_unit_id">ca-app-pub-9323445577003464/</string>
+    <string name="ad_unit_id">ca-app-pub-9323445577003464/7014392744</string>
+    <string name="store_image_desc">Store Image</string>
+    <string name="action_fav">Favorite</string>
 </resources>

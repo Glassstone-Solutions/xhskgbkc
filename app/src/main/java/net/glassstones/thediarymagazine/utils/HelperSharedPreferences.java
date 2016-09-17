@@ -4,6 +4,14 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import net.glassstones.thediarymagazine.network.models.NI;
+
+import java.lang.reflect.Type;
+import java.util.List;
+
 /**
  * Created by Thompson on 06/01/2016.
  * For Markit
@@ -68,6 +76,20 @@ public class HelperSharedPreferences {
     public static float getSharedPreferencesFloat(Context context, String key, float _default){
         SharedPreferences preferences=PreferenceManager.getDefaultSharedPreferences(context);
         return preferences.getFloat(key, _default);
+    }
+
+    public static String getJsonString(List<? extends NI> posts){
+        Gson gson = new Gson();
+        Type listType = new TypeToken<List<NI>>() {
+        }.getType();
+        return gson.toJson(posts, listType);
+    }
+
+    public static List<NI> getPostsListFromSP(Context c, String key) {
+        Gson gson = new Gson();
+        Type listType = new TypeToken<List<NI>>() {
+        }.getType();
+        return gson.fromJson(HelperSharedPreferences.getSharedPreferencesString(c, key, "[]"), listType);
     }
 
 }

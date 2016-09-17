@@ -8,10 +8,8 @@ import android.os.Looper;
 import android.support.design.widget.TabLayout;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.ViewPager;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Toast;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
 import com.google.android.gms.ads.AdListener;
@@ -22,10 +20,12 @@ import com.google.android.gms.ads.MobileAds;
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.common.BaseActivity;
+import net.glassstones.thediarymagazine.network.models.StoreItem;
 import net.glassstones.thediarymagazine.ui.adapters.MyFragmentAdapter;
 import net.glassstones.thediarymagazine.ui.fragments.DashboardFragment;
 import net.glassstones.thediarymagazine.ui.fragments.NewsFragment;
 import net.glassstones.thediarymagazine.ui.fragments.SearchFragment;
+import net.glassstones.thediarymagazine.ui.fragments.StoreFragment;
 import net.glassstones.thediarymagazine.ui.fragments.UnderConstructionFragment;
 import net.glassstones.thediarymagazine.utils.HelperSharedPreferences;
 import net.glassstones.thediarymagazine.utils.RealmUtils;
@@ -33,12 +33,14 @@ import net.glassstones.thediarymagazine.utils.RealmUtils;
 import butterknife.InjectView;
 
 
-public class NewsFeedActivity extends BaseActivity implements NewsFragment.NewsFeedFragmentInteraction {
+public class NewsFeedActivity extends BaseActivity implements NewsFragment.NewsFeedFragmentInteraction, StoreFragment.StoreFragmentInteraction {
     @InjectView(R.id.menu_tab)
     TabLayout mTabLayout;
     @InjectView(R.id.pager)
     ViewPager mPager;
     RealmUtils realmUtils;
+    // Create the Handler object (on the main thread by default)
+    Handler handler = new Handler(Looper.getMainLooper());
     private InterstitialAd mInterstitialAd;
     private int[] tabIcons = {
             R.drawable.ic_home,
@@ -54,9 +56,6 @@ public class NewsFeedActivity extends BaseActivity implements NewsFragment.NewsF
             R.drawable.ic_favorite_unselected,
             R.drawable.shopping_basket_unselected
     };
-
-    // Create the Handler object (on the main thread by default)
-    Handler handler = new Handler(Looper.getMainLooper());
     // Define the code block to be executed
     private Runnable runnableCode = new Runnable() {
         @Override
@@ -107,7 +106,6 @@ public class NewsFeedActivity extends BaseActivity implements NewsFragment.NewsF
             doSplash();
         } else {
             init();
-            initAds();
         }
     }
 
@@ -117,7 +115,6 @@ public class NewsFeedActivity extends BaseActivity implements NewsFragment.NewsF
         if (realmUtils != null) {
             realmUtils.closeRealm();
         }
-        handler.removeCallbacks(runnableCode);
     }
 
     private void doSplash () {
@@ -159,24 +156,6 @@ public class NewsFeedActivity extends BaseActivity implements NewsFragment.NewsF
         setupTabIcons();
     }
 
-    private void initAds () {
-        // Initialize the Mobile Ads SDK.
-        MobileAds.initialize(this, "ca-app-pub-9323445577003464~5537659546");
-
-        // Create the InterstitialAd and set the adUnitId.
-        mInterstitialAd = new InterstitialAd(this);
-        // Defined in res/values/strings.xml
-        mInterstitialAd.setAdUnitId(getString(R.string.ad_unit_id));
-        mInterstitialAd.setAdListener(new AdListener() {
-            @Override
-            public void onAdClosed () {
-                Log.e(TAG, "Ad closed");
-                loadAds();
-            }
-        });
-        handler.post(runnableCode);
-    }
-
     private void setupViewPager (ViewPager mPager) {
         MyFragmentAdapter adapter = new MyFragmentAdapter(getSupportFragmentManager());
         adapter.addFrag(new NewsFragment());
@@ -184,7 +163,7 @@ public class NewsFeedActivity extends BaseActivity implements NewsFragment.NewsF
         adapter.addFrag(new DashboardFragment());
         adapter.addFrag(new SearchFragment());
         adapter.addFrag(UnderConstructionFragment.newInstance(defaultTabIcons[3], "Favorites"));
-        adapter.addFrag(UnderConstructionFragment.newInstance(defaultTabIcons[4], "Shopping"));
+        adapter.addFrag(StoreFragment.newInstance());
         mPager.setAdapter(adapter);
     }
 
@@ -197,6 +176,7 @@ public class NewsFeedActivity extends BaseActivity implements NewsFragment.NewsF
         tab.setIcon(defaultTabIcons[p]);
     }
 
+    @SuppressWarnings("ConstantConditions")
     private void setupTabIcons () {
         mTabLayout.getTabAt(0).setIcon(tabIcons[0]);
         mTabLayout.getTabAt(1).setIcon(defaultTabIcons[1]);
@@ -205,10 +185,42 @@ public class NewsFeedActivity extends BaseActivity implements NewsFragment.NewsF
         mTabLayout.getTabAt(4).setIcon(defaultTabIcons[4]);
     }
 
+    @Override
+    protected void onPause () {
+        super.onPause();
+        handler.removeCallbacks(runnableCode);
+    }
+
+    @Override
+    protected void onResume () {
+        super.onResume();
+        initAds();
+    }
+
+    private void initAds () {
+        // Initialize the Mobile Ads SDK.
+        MobileAds.initialize(this, "ca-app-pub-9323445577003464~5537659546");
+
+        // Create the InterstitialAd and set the adUnitId.
+        mInterstitialAd = new InterstitialAd(this);
+        // Defined in res/values/strings.xml
+        mInterstitialAd.setAdUnitId(getString(R.string.ad_unit_id));
+        mInterstitialAd.setAdListener(new AdListener() {
+            @Override
+            public void onAdClosed () {
+                loadAds();
+            }
+        });
+        handler.post(runnableCode);
+    }
+
     private void loadAds () {
         // Request a new ad if one isn't already loaded, hide the button, and kick off the timer.
         if (!mInterstitialAd.isLoading() && !mInterstitialAd.isLoaded()) {
-            AdRequest adRequest = new AdRequest.Builder().build();
+            AdRequest adRequest = new AdRequest.Builder()
+                    .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                    .addTestDevice("2154DC2917F31CD250ECD99BECD94E39")
+                    .build();
             mInterstitialAd.loadAd(adRequest);
         }
     }
@@ -223,8 +235,12 @@ public class NewsFeedActivity extends BaseActivity implements NewsFragment.NewsF
         if (mInterstitialAd != null && mInterstitialAd.isLoaded()) {
             mInterstitialAd.show();
         } else {
-            Toast.makeText(this, "Ad did not load", Toast.LENGTH_SHORT).show();
             loadAds();
         }
+    }
+
+    @Override
+    public void onItemClick (StoreItem item) {
+
     }
 }

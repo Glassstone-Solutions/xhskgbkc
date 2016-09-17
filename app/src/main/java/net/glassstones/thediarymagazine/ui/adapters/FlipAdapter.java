@@ -18,8 +18,6 @@ import com.google.firebase.analytics.FirebaseAnalytics;
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.network.Callback;
-import net.glassstones.thediarymagazine.network.ServiceGenerator;
-import net.glassstones.thediarymagazine.network.TDMAPIClient;
 import net.glassstones.thediarymagazine.network.models.NI;
 import net.glassstones.thediarymagazine.network.models.NewsItem;
 import net.glassstones.thediarymagazine.ui.widgets.CustomTextView;
@@ -41,6 +39,7 @@ public class FlipAdapter extends BaseAdapter {
     private LayoutInflater inflater;
     private Callback callback;
     private FirebaseAnalytics mTracker;
+    private boolean shouldRequestMore = false;
 
     private int itemPosition = -1;
 
@@ -56,10 +55,6 @@ public class FlipAdapter extends BaseAdapter {
 
     private void init () {
         inflater = LayoutInflater.from(mContext);
-
-        ServiceGenerator sg = new ServiceGenerator((Common) mContext.getApplicationContext());
-
-        TDMAPIClient client = sg.createService(TDMAPIClient.class);
 
         mTracker = ((Common) mContext.getApplicationContext()).getmFirebaseAnalytics();
     }
@@ -116,7 +111,7 @@ public class FlipAdapter extends BaseAdapter {
     }
 
     private void loadMoreAndShowAds (int position) {
-        if (items.size() - position == 5 && key == 25) {
+        if (items.size() - position == 5 && key == 25 || shouldRequestMore) {
             callback.onMoreRequest(items.size());
             if (adskey > 1) {
                 int pos;
@@ -128,6 +123,7 @@ public class FlipAdapter extends BaseAdapter {
             }
             adskey++;
             key = 0;
+            shouldRequestMore = false;
         }
     }
 
@@ -194,4 +190,11 @@ public class FlipAdapter extends BaseAdapter {
         }
     }
 
+    public void setShouldRequestMore (boolean shouldRequestMore) {
+        this.shouldRequestMore = shouldRequestMore;
+    }
+
+    public int getItemPosition () {
+        return itemPosition;
+    }
 }

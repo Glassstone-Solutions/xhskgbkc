@@ -36,6 +36,7 @@ public class NI implements Parcelable {
     }
 
     public static String POST_LIST_PARCEL_KEY = "_posts";
+    public static String POST_FAV_LIST_PARCEL_KEY = "_favPosts";
 
     public int getId() {
         return id;

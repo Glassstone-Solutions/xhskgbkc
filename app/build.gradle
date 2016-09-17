@@ -74,6 +74,7 @@ dependencies {
     compile group: 'org.jsoup', name: 'jsoup', version: '1.7.2'
 
 
+
     compile 'com.android.support:multidex:1.0.1'
     compile 'com.android.support:appcompat-v7:24.0.0'
     compile 'com.android.support:design:24.0.0'
@@ -84,7 +85,7 @@ dependencies {
     compile 'com.google.android.gms:play-services-gcm:9.2.1'
     compile 'com.google.android.gms:play-services-auth:9.2.1'
     compile 'com.google.android.gms:play-services-analytics:9.2.1'
-    compile 'com.google.android.gms:play-services-ads:9.2.1'
+    compile 'com.google.firebase:firebase-ads:9.2.1'
     compile 'com.google.firebase:firebase-core:9.2.1'
     compile 'com.google.code.gson:gson:2.4'
     compile 'commons-io:commons-io:2.4'
@@ -98,7 +99,6 @@ dependencies {
     compile 'org.greenrobot:eventbus:3.0.0'
     compile 'com.airbnb:deeplinkdispatch:2.0.1'
     compile 'io.reactivex:rxandroid:1.0.1'
-
     compile 'io.reactivex:rxjava:1.0.14'
     compile 'io.reactivex:rxjava-math:1.0.0'
     compile 'com.github.kaushikgopal:CoreTextUtils:c703fa12b6'

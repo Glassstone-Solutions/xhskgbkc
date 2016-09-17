@@ -13,4 +13,5 @@
     <color name="avoLightGray">#efefef</color>
     <color name="colorBackground">#f9f9f9</color>
     <color name="scrim">#45000000</color>
+    <color name="color_price">#DE8A38</color>
 </resources>

@@ -88,14 +88,15 @@ public class CategoryActivity extends AppCompatActivity implements
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         mLabel = (CustomTextView) toolbar.findViewById(R.id.title);
-        mLabel.setText(CoreNullnessUtils.isNotNullOrEmpty(Constants.CATEGOIRES[category])
-                ? Constants.CATEGOIRES[category] : "News");
 
         subscriptions = new CompositeSubscription();
 
         context = this;
 
         category = getIntent().getIntExtra("cat", -1);
+
+        mLabel.setText(CoreNullnessUtils.isNotNullOrEmpty(Constants.CATEGOIRES[getCategoryIndex(category)])
+                ? Constants.CATEGOIRES[getCategoryIndex(category)] : "News");
 
         posts = new ArrayList<>();
 
@@ -127,6 +128,34 @@ public class CategoryActivity extends AppCompatActivity implements
             mAdapter.update(posts);
         }
 
+    }
+
+    private int getCategoryIndex (int category) {
+        int cat;
+        switch (category){
+            case Constants.CATEGORY_NEWS:
+                cat = 0;
+            break;
+            case Constants.CATEGORY_BUSINESS:
+                cat = 1;
+            break;
+            case Constants.CATEGORY_ENTERTAINMENT:
+                cat = 2;
+            break;
+            case Constants.CATEGORY_SPORTS:
+                cat = 3;
+            break;
+            case Constants.CATEGORY_LIFESTYLE:
+                cat = 4;
+            break;
+            case Constants.CATEGORY_WELLBIENG:
+                cat = 5;
+            break;
+            default:
+                cat = 0;
+            break;
+        }
+        return cat;
     }
 
     private Subscription getSubscription (Observable<List<NI>> postsObservable) {
