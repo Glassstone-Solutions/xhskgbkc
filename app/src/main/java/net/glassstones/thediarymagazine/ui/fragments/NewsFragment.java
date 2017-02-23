@@ -11,6 +11,8 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 
 import net.glassstones.thediarymagazine.Common;
@@ -72,6 +74,10 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     TDMAPIClient client;
 
     boolean isRefreshing = false;
+    @InjectView(R.id.retryBtn)
+    Button retryBtn;
+    @InjectView(R.id.retryWrap)
+    LinearLayout retryWrap;
 
     private boolean isTablet;
 
@@ -83,30 +89,31 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     private NewsFeedFragmentInteraction callback;
 
     @Override
-    public void onAttach (Context context) {
+    public void onAttach(Context context) {
         super.onAttach(context);
         callback = (NewsFeedFragmentInteraction) context;
     }
 
-    public NewsFragment () {
+    public NewsFragment() {
         // Required empty public constructor
     }
 
     @Override
-    public void onCreate (@Nullable Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.e(TAG, "On Create with "+ HelperSharedPreferences.getPostsListFromSP(getActivity(),
-                NI.POST_LIST_PARCEL_KEY).size()+" posts");
+        Log.e(TAG, "On Create with " + HelperSharedPreferences.getPostsListFromSP(getActivity(),
+                NI.POST_LIST_PARCEL_KEY).size() + " posts");
         client = ServiceGenerator.createGithubService();
         posts = new ArrayList<>();
         _posts = new ArrayList<>();
         clusters = new ArrayList<>();
         isTablet = getActivity().getResources().getBoolean(R.bool.isTablet);
+        subscriptions = new CompositeSubscription();
     }
 
     @Override
-    public View onCreateView (LayoutInflater inflater, ViewGroup container,
-                              Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_news, container, false);
         ButterKnife.inject(this, view);
@@ -115,11 +122,24 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
         progress.setIndeterminate(true);
         progress.setVisibility(View.VISIBLE);
 
+        retryBtn.setOnClickListener(v -> {
+            Observable<List<NI>> postsObservable = getListObservable();
+            if (subscriptions != null && !subscriptions.isUnsubscribed()) {
+                if (subscriptions.hasSubscriptions()){
+                    subscriptions.clear();
+                }
+                subscriptions.add(getSubscription(postsObservable));
+
+                progress.setVisibility(View.VISIBLE);
+                retryWrap.setVisibility(View.GONE);
+            }
+        });
+
         return view;
     }
 
     @Override
-    public void onViewCreated (View view, Bundle savedInstanceState) {
+    public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         if (!isTablet) {
             mAdapter = new FlipAdapter(getActivity(), posts);
@@ -137,13 +157,13 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     }
 
     @Override
-    public void onStart () {
+    public void onStart() {
         super.onStart();
         EventBus.getDefault().register(this);
     }
 
     @Override
-    public void onResume () {
+    public void onResume() {
         super.onResume();
         assert posts != null;
         if (posts.size() > 0) {
@@ -164,19 +184,23 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
             }
         }
 
-        Observable<List<NI>> postsObservable = client.getObservablePosts(CoreNullnessUtils.isNotNullOrEmpty(posts) ? posts.size()
-                : 25, null, 1, null)
-                .flatMap(Observable::from)
-                .flatMap(this::getPairObservable)
-                .flatMap(this::getObservable)
-                .toList();
-        subscriptions = new CompositeSubscription();
+        Observable<List<NI>> postsObservable = getListObservable();
 
         Subscription postSub = getSubscription(postsObservable);
         subscriptions.add(postSub);
     }
 
-    private Subscription getSubscription (Observable<List<NI>> postsObservable) {
+    @NonNull
+    private Observable<List<NI>> getListObservable() {
+        return client.getObservablePosts(CoreNullnessUtils.isNotNullOrEmpty(posts) ? posts.size()
+                : 25, null, 1, null)
+                .flatMap(Observable::from)
+                .flatMap(this::getPairObservable)
+                .flatMap(this::getObservable)
+                .toList();
+    }
+
+    private Subscription getSubscription(Observable<List<NI>> postsObservable) {
         int retryCount = 3;
         int initialDelay = 3;
         return postsObservable
@@ -186,19 +210,20 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<List<NI>>() {
                     @Override
-                    public void onCompleted () {
+                    public void onCompleted() {
                         progress.setVisibility(View.GONE);
                     }
 
                     @Override
-                    public void onError (Throwable e) {
+                    public void onError(Throwable e) {
                         Log.e(TAG, "Darn! App crapped");
                         progress.setVisibility(View.GONE);
+                        retryWrap.setVisibility(View.VISIBLE);
                         e.printStackTrace();
                     }
 
                     @Override
-                    public void onNext (List<NI> nis) {
+                    public void onNext(List<NI> nis) {
                         posts.clear();
                         posts = nis;
 //                        if (posts.size() > 0 && progress.getVisibility() == View.VISIBLE) {
@@ -217,43 +242,47 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onPostEvent (PostEvent event) {
+    public void onPostEvent(PostEvent event) {
     }
 
     @Override
-    public void onStop () {
+    public void onStop() {
         super.onStop();
         EventBus.getDefault().unregister(this);
     }
 
     @Override
-    public void onDestroyView () {
+    public void onDestroyView() {
         super.onDestroyView();
         ButterKnife.reset(this);
         subscriptions.unsubscribe();
     }
 
     @Override
-    public void onDestroy () {
+    public void onDestroy() {
         super.onDestroy();
 //        handler.removeCallbacks(runnableCode);
     }
 
     @Override
-    public void onPageRequested (NewsItem newsItem) {
+    public void onPageRequested(NewsItem newsItem) {
         Intent i = new Intent(getActivity(), NewsDetailsActivity.class);
         i.putExtra("postBundle", newsItem.getNi());
         getActivity().startActivity(i);
     }
 
     @Override
-    public void onMoreRequest (int offset) {
+    public void onMoreRequest(int offset) {
 
-        if (moreSub != null && !moreSub.isUnsubscribed()){
+        int retryCount = 3;
+        int initialDelay = 3;
+
+        if (moreSub != null && !moreSub.isUnsubscribed()) {
             moreSub.isUnsubscribed();
         }
 
         moreSub = client.getObservablePosts(25, offset, 1, null)
+                .retryWhen(exponentialBackoffForExceptions(initialDelay, retryCount, TimeUnit.SECONDS, IOException.class))
                 .flatMap(Observable::from)
                 .flatMap(this::getPairObservable)
                 .flatMap(this::getObservable)
@@ -261,19 +290,19 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<NI>() {
                     @Override
-                    public void onCompleted () {
+                    public void onCompleted() {
                         Log.e(TAG, "Done!");
                     }
 
                     @Override
-                    public void onError (Throwable e) {
+                    public void onError(Throwable e) {
                         Log.e(TAG, "Darn! App crapped");
                         e.printStackTrace();
                         mAdapter.setShouldRequestMore(true);
                     }
 
                     @Override
-                    public void onNext (NI ni) {
+                    public void onNext(NI ni) {
                         setNi(ni);
                     }
                 });
@@ -281,27 +310,27 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     }
 
     @Override
-    public void onShowAd () {
+    public void onShowAd() {
         callback.showAd();
     }
 
     @Override
-    public void onFlippedToPage (FlipView v, int position, long id) {
+    public void onFlippedToPage(FlipView v, int position, long id) {
 
     }
 
     @Override
-    public void onOverFlip (FlipView v, OverFlipMode mode, boolean overFlippingPrevious, float
+    public void onOverFlip(FlipView v, OverFlipMode mode, boolean overFlippingPrevious, float
             overFlipDistance, float flipDistancePerPage) {
-        if (!isRefreshing){
+        if (!isRefreshing) {
             doRefresh(overFlippingPrevious);
         }
     }
 
-    private void doRefresh (boolean overFlippingPrevious) {
+    private void doRefresh(boolean overFlippingPrevious) {
         if (refreshSub != null && !refreshSub.isUnsubscribed())
             refreshSub.isUnsubscribed();
-        if (mAdapter.getCount() == posts.size() && mAdapter.getItemPosition() == mAdapter.getCount()){
+        if (mAdapter.getCount() == posts.size() && mAdapter.getItemPosition() == mAdapter.getCount()) {
             refreshSub = Observable.just(overFlippingPrevious)
                     .debounce(500, TimeUnit.MILLISECONDS)
                     .take(1)
@@ -314,17 +343,17 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(new Observer<NI>() {
                         @Override
-                        public void onCompleted () {
+                        public void onCompleted() {
 
                         }
 
                         @Override
-                        public void onError (Throwable e) {
+                        public void onError(Throwable e) {
                             mAdapter.setShouldRequestMore(true);
                         }
 
                         @Override
-                        public void onNext (NI ni) {
+                        public void onNext(NI ni) {
                             setNi(ni);
                         }
                     });
@@ -332,7 +361,7 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
         }
     }
 
-    private void setNi (NI ni) {
+    private void setNi(NI ni) {
         posts.add(ni);
         HelperSharedPreferences.putSharedPreferencesString(getActivity(),
                 NI.POST_LIST_PARCEL_KEY, HelperSharedPreferences.getJsonString(posts));
@@ -343,7 +372,7 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
             _posts.add(ni);
             Random rand = new Random();
             int currentCount = rand.nextInt(3) + 1;
-            if (_posts.size() == currentCount && _posts.size() == 3){
+            if (_posts.size() == currentCount && _posts.size() == 3) {
                 for (NewsCluster nc : Common.getNICluster(_posts)) {
                     clusters.add(nc);
                 }
@@ -354,19 +383,19 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     }
 
     @Override
-    public Class clazz () {
+    public Class clazz() {
         return this.getClass();
     }
 
     @NonNull
-    private Observable<NI> getObservable (Pair<NI, WPMedia> pair) {
+    private Observable<NI> getObservable(Pair<NI, WPMedia> pair) {
         NI post = pair.first;
         post.setMedia(pair.second);
         return Observable.just(post);
     }
 
     @NonNull
-    private Observable<Pair<NI, WPMedia>> getPairObservable (NI ni) {
+    private Observable<Pair<NI, WPMedia>> getPairObservable(NI ni) {
         Observable<WPMedia> media = client.getMediaObservable(ni.getFeatured_media());
         return Observable.zip(Observable.just(ni), media, Pair::new);
     }
@@ -377,7 +406,7 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     }
 
 
-    public interface NewsFeedFragmentInteraction{
+    public interface NewsFeedFragmentInteraction {
         void showAd();
     }
 

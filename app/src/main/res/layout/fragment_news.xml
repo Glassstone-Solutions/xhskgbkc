@@ -1,9 +1,9 @@
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:flipview="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context="net.glassstones.thediarymagazine.ui.fragments.NewsFragment">
 
     <se.emilsjolander.flipview.FlipView
@@ -19,4 +19,37 @@
         android:layout_height="48dp"
         android:layout_centerInParent="true"
         android:visibility="invisible"/>
+
+    <LinearLayout
+        android:id="@+id/retryWrap"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_centerInParent="true"
+        android:visibility="invisible">
+
+        <net.glassstones.thediarymagazine.ui.widgets.CustomTextView
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="No post retrieved"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title"
+            android:textColor="@color/colorSource"
+            android:textSize="14sp"
+            app:font="@string/montserrat"/>
+
+        <Button
+            android:id="@+id/retryBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            style="@style/AppTheme.TagButton"
+            android:textAllCaps="true"
+            android:text="Retry"
+            />
+
+    </LinearLayout>
 </RelativeLayout>
