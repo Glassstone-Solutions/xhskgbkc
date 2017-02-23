@@ -33,6 +33,7 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -49,6 +50,8 @@ import rx.schedulers.Schedulers;
 import rx.subscriptions.CompositeSubscription;
 import se.emilsjolander.flipview.FlipView;
 import se.emilsjolander.flipview.OverFlipMode;
+
+import static net.glassstones.thediarymagazine.utils.Error.exponentialBackoffForExceptions;
 
 /**
  * A simple {@link BaseNewsFragment} subclass.
@@ -174,20 +177,23 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     }
 
     private Subscription getSubscription (Observable<List<NI>> postsObservable) {
+        int retryCount = 3;
+        int initialDelay = 3;
         return postsObservable
-                .retry()
+                .retryWhen(exponentialBackoffForExceptions(initialDelay, retryCount, TimeUnit.SECONDS, IOException.class))
                 .distinct()
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(new Observer<List<NI>>() {
                     @Override
                     public void onCompleted () {
-
+                        progress.setVisibility(View.GONE);
                     }
 
                     @Override
                     public void onError (Throwable e) {
                         Log.e(TAG, "Darn! App crapped");
+                        progress.setVisibility(View.GONE);
                         e.printStackTrace();
                     }
 
@@ -195,9 +201,9 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
                     public void onNext (List<NI> nis) {
                         posts.clear();
                         posts = nis;
-                        if (posts.size() > 0 && progress.getVisibility() == View.VISIBLE) {
-                            progress.setVisibility(View.GONE);
-                        }
+//                        if (posts.size() > 0 && progress.getVisibility() == View.VISIBLE) {
+//                            progress.setVisibility(View.GONE);
+//                        }
                         HelperSharedPreferences.putSharedPreferencesString(getActivity(),
                                 NI.POST_LIST_PARCEL_KEY, HelperSharedPreferences.getJsonString(posts));
                         if (!isTablet) {
@@ -353,20 +359,20 @@ public class NewsFragment extends BaseNewsFragment implements Callback,
     }
 
     @NonNull
-    private Observable<? extends NI> getObservable (Pair<NI, WPMedia> pair) {
+    private Observable<NI> getObservable (Pair<NI, WPMedia> pair) {
         NI post = pair.first;
         post.setMedia(pair.second);
         return Observable.just(post);
     }
 
     @NonNull
-    private Observable<? extends Pair<NI, WPMedia>> getPairObservable (NI ni) {
+    private Observable<Pair<NI, WPMedia>> getPairObservable (NI ni) {
         Observable<WPMedia> media = client.getMediaObservable(ni.getFeatured_media());
         return Observable.zip(Observable.just(ni), media, Pair::new);
     }
 
     @NonNull
-    private Observable<? extends List<NI>> getPostSPObservable(Context c, String key) {
+    private Observable<List<NI>> getPostSPObservable(Context c, String key) {
         return Observable.just(HelperSharedPreferences.getPostsListFromSP(c, key));
     }
 
