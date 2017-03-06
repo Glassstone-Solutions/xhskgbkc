@@ -32,6 +32,8 @@ public class NI implements Parcelable {
     private WPMedia media;
     List<Integer> categories;
 
+//    private WPAuthor author;
+
     public NI() {
     }
 
@@ -109,6 +111,14 @@ public class NI implements Parcelable {
     public void setAuthorId(int authorId) {
         this.authorId = authorId;
     }
+
+//    public WPAuthor getAuthor(){
+//        return author;
+//    }
+//
+//    public void setAuthor(WPAuthor author){
+//        this.author = author;
+//    }
 
     public int getFeatured_media() {
         return featured_media;

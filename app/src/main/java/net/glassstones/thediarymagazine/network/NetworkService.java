@@ -26,7 +26,7 @@ import rx.schedulers.Schedulers;
  */
 public class NetworkService {
 
-    public static final String API_BASE_URL = "http://www.thediarymagazine.com";
+    public static final String API_BASE_URL = "http://192.168.8.100";
 
     private NetworkAPI networkAPI;
     private OkHttpClient okHttpClient;

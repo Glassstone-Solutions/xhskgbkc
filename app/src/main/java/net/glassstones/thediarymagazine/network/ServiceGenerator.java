@@ -1,5 +1,7 @@
 package net.glassstones.thediarymagazine.network;
 
+import android.util.Log;
+
 import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -20,9 +22,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ServiceGenerator {
 
 
-    public static final String API_BASE_URL = "http://www.thediarymagazine.com";
-
-    int cacheSize = 20 * 1024 * 1024; // 10 MiB
+    private static final String API_BASE_URL = "http://192.168.8.100/";
+    private static final String TAG = ServiceGenerator.class.getSimpleName();
 
     private Retrofit retrofit;
 
@@ -38,6 +39,7 @@ public class ServiceGenerator {
     }
 
     private Cache createCache (Common mApp) {
+        int cacheSize = 20 * 1024 * 1024;
         return new Cache(mApp.getCacheDir(), cacheSize);
     }
 
@@ -53,6 +55,7 @@ public class ServiceGenerator {
         builder.addInterceptor(chain -> {
             // Do anything with response here
             //if we ant to grab a specific cookie or something..
+            Log.d(TAG, chain.request().url().toString());
             return chain.proceed(chain.request());
         });
 
@@ -78,7 +81,8 @@ public class ServiceGenerator {
     }
 
     public static TDMAPIClient createGithubService () {
-        Retrofit.Builder builder = new Retrofit.Builder().addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+        Retrofit.Builder builder = new Retrofit.Builder()
+                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                 .addConverterFactory(GsonConverterFactory.create())
                 .baseUrl(API_BASE_URL);
 
@@ -86,6 +90,7 @@ public class ServiceGenerator {
             Request request = chain.request();
             Request newReq = request.newBuilder()
                     .build();
+            Log.d(TAG, chain.request().url().toString());
             return chain.proceed(newReq);
         }).build();
 

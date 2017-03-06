@@ -15,6 +15,6 @@ public class Constants {
 
     public static final String[] CATEGOIRES = {"News", "Business",
             "Entertainment", "Sports", "Lifestyle", "Well Being"};
-    public static final String BASE_URL = "http://www.thediarymagazine.com  ";
+    public static final String BASE_URL = "http://192.168.8.100";
     public static final String VERSION_PATH = "/v1";
 }

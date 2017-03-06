@@ -94,7 +94,7 @@ public class NewsDetailAdapter extends RecyclerView.Adapter {
         CustomTextView timestamp = vh.getTimestamp();
 
         title.setText(Html.fromHtml(news.getTitle()));
-//        source.setText(R.string.source_placeholder);
+        source.setText(news.getAuthor());
         timestamp.setText(news.getDate());
     }
 

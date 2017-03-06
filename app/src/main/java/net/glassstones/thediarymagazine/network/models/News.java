@@ -8,7 +8,7 @@ import org.jsoup.select.Elements;
  * For The Diary Magazine
  */
 public class News {
-    String title, date;
+    String title, date, author;
     Element firstParagraph;
     Elements otherParagraphs;
 
@@ -32,6 +32,11 @@ public class News {
         return this;
     }
 
+    public News author (String name) {
+        this.author = name;
+        return this;
+    }
+
     public String getTitle () {
         return title;
     }
@@ -46,5 +51,13 @@ public class News {
 
     public Elements getOtherParagraphs () {
         return otherParagraphs;
+    }
+
+    public String getAuthor() {
+        return author;
+    }
+
+    public void setAuthor(String name) {
+        this.author = name;
     }
 }

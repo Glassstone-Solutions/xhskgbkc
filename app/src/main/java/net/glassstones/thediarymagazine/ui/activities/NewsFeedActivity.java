@@ -20,9 +20,11 @@ import com.google.android.gms.ads.MobileAds;
 import net.glassstones.thediarymagazine.Common;
 import net.glassstones.thediarymagazine.R;
 import net.glassstones.thediarymagazine.common.BaseActivity;
+import net.glassstones.thediarymagazine.network.models.NI;
 import net.glassstones.thediarymagazine.network.models.StoreItem;
 import net.glassstones.thediarymagazine.ui.adapters.MyFragmentAdapter;
 import net.glassstones.thediarymagazine.ui.fragments.DashboardFragment;
+import net.glassstones.thediarymagazine.ui.fragments.FavFragment;
 import net.glassstones.thediarymagazine.ui.fragments.NewsFragment;
 import net.glassstones.thediarymagazine.ui.fragments.SearchFragment;
 import net.glassstones.thediarymagazine.ui.fragments.StoreFragment;
@@ -33,12 +35,14 @@ import net.glassstones.thediarymagazine.utils.RealmUtils;
 import butterknife.InjectView;
 
 
-public class NewsFeedActivity extends BaseActivity implements NewsFragment.NewsFeedFragmentInteraction, StoreFragment.StoreFragmentInteraction {
+public class NewsFeedActivity extends BaseActivity implements NewsFragment.NewsFeedFragmentInteraction, StoreFragment.StoreFragmentInteraction, FavFragment.OnFavListInteraction {
     @InjectView(R.id.menu_tab)
     TabLayout mTabLayout;
     @InjectView(R.id.pager)
     ViewPager mPager;
     RealmUtils realmUtils;
+
+    private boolean isTablet;
     // Create the Handler object (on the main thread by default)
     Handler handler = new Handler(Looper.getMainLooper());
     private InterstitialAd mInterstitialAd;
@@ -106,6 +110,7 @@ public class NewsFeedActivity extends BaseActivity implements NewsFragment.NewsF
             doSplash();
         } else {
             init();
+            isTablet = getResources().getBoolean(R.bool.isTablet);
         }
     }
 
@@ -159,10 +164,13 @@ public class NewsFeedActivity extends BaseActivity implements NewsFragment.NewsF
     private void setupViewPager (ViewPager mPager) {
         MyFragmentAdapter adapter = new MyFragmentAdapter(getSupportFragmentManager());
         adapter.addFrag(new NewsFragment());
-//        adapter.addFrag(UnderConstructionFragment.newInstance(defaultTabIcons[2], "Search"));
         adapter.addFrag(new DashboardFragment());
         adapter.addFrag(new SearchFragment());
-        adapter.addFrag(UnderConstructionFragment.newInstance(defaultTabIcons[3], "Favorites"));
+        if (!isTablet){
+            adapter.addFrag(FavFragment.newInstance(1));
+        } else {
+            adapter.addFrag(FavFragment.newInstance(3));
+        }
         adapter.addFrag(StoreFragment.newInstance());
         mPager.setAdapter(adapter);
     }
@@ -242,5 +250,12 @@ public class NewsFeedActivity extends BaseActivity implements NewsFragment.NewsF
     @Override
     public void onItemClick (StoreItem item) {
 
+    }
+
+    @Override
+    public void onNewsClick(NI item) {
+        Intent i = new Intent(this, NewsDetailsActivity.class);
+        i.putExtra("postBundle", item);
+        startActivity(i);
     }
 }
